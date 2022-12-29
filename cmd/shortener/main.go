@@ -27,48 +27,45 @@ func randSeq(n int) string {
 	return string(b)
 }
 
+func GetFunc(mm_p map[string]string, mm_g map[string]string, w http.ResponseWriter, r *http.Request) {
+	ug := r.URL.Path
+	buf := strings.Replace(ug, "/", "", -1)
+	out := string(buf)
+	fmt.Println("1")
+	if mm_g[out] != "" {
+		w.Header().Set("Location", mm_g[out])
+		w.WriteHeader(307)
+	} else {
+		w.WriteHeader(400)
+	}
+}
+
+func PostFunc(mm_p map[string]string, mm_g map[string]string, w http.ResponseWriter, r *http.Request) {
+	bp, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error 11")
+		w.WriteHeader(400)
+	} else {
+		rnd_res := randSeq(6)
+		mm_p[string(bp)] = rnd_res
+		mm_g[rnd_res] = string(bp)
+		result_post := "http://localhost:8080/" + rnd_res
+		w.WriteHeader(201)
+		w.Write([]byte(result_post))
+	}
+}
+
 func Myfunc(mm_p map[string]string, mm_g map[string]string) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method == http.MethodPost {
 
-			bp, err := io.ReadAll(r.Body)
-			if err != nil {
-				fmt.Println("Error 11")
-				w.WriteHeader(400)
-			} else {
-				rnd_res := randSeq(6)
-				mm_p[string(bp)] = rnd_res
-				mm_g[rnd_res] = string(bp)
+			PostFunc(mm_p, mm_g, w, r)
 
-				result_post := "http://localhost:8080/" + rnd_res
-
-				//fmt.Println(result_post)
-
-				w.WriteHeader(201)
-				w.Write([]byte(result_post))
-
-				//count +=1
-			}
 		} else if r.Method == http.MethodGet {
 
-			ug := r.URL.Path
-			buf := strings.Replace(ug, "/", "", -1)
-			out := string(buf)
-			fmt.Println(out)
-			buf1 := mm_g[out]
-			fmt.Println("1")
-			if mm_g[out] != "" {
-				fmt.Println("2")
-				w.Header().Add("Location", buf1)
-				w.WriteHeader(http.StatusTemporaryRedirect)
-				//w.Write([]byte(mm_g[out]))
-				//fmt.Println(w.Header()["Location"])
-				fmt.Println("3")
-			} else {
-				w.WriteHeader(400)
-			}
+			GetFunc(mm_p, mm_g, w, r)
 
 		} else {
 			fmt.Println("Error method")
@@ -86,10 +83,6 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	http.HandleFunc("/", res)
-
-	http.HandleFunc("/POST", res)
-
-	//http.HandleFunc("/GET/", res)
 
 	fmt.Printf("Starting application on port %v\n", portNumber)
 
