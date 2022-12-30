@@ -1,14 +1,12 @@
-package handler_test
+package handler
 
 import (
 	"bytes"
 	"fmt"
-	MyHandler "internal/app"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
-	//"io"
 )
 
 func Test_RandSeq(t *testing.T) {
@@ -40,13 +38,13 @@ func Test_RandSeq(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got1 := len(MyHandler.RandSeq(tt.arg)); got1 != tt.want.ln {
+			if got1 := len(RandSeq(tt.arg)); got1 != tt.want.ln {
 				t.Errorf("randSeq() = %v, want %v", got1, tt.want.ln)
 				fmt.Println("Tes1 Fail")
 			}
 		})
 		t.Run(tt.name, func(t *testing.T) {
-			if got2 := reflect.TypeOf(MyHandler.RandSeq(tt.arg)); got2 != reflect.TypeOf(tt.want.res) {
+			if got2 := reflect.TypeOf(RandSeq(tt.arg)); got2 != reflect.TypeOf(tt.want.res) {
 				t.Errorf("randSeq() = %v, want %v", got2, tt.want.res)
 				fmt.Println("Tes2 Fail")
 			}
@@ -125,7 +123,7 @@ func Test_Myfunc(t *testing.T) {
 			var mp1_g map[string]string = tt.args.m_g
 
 			//Присвоение функции хендлер с заданными параметрами
-			res_Mf_p := MyHandler.PostFunc(mp1_p, mp1_g)
+			res_Mf_p := PostFunc(mp1_p, mp1_g)
 
 			//Определение хендлера
 			h := http.HandlerFunc(res_Mf_p)
@@ -156,7 +154,7 @@ func Test_Myfunc(t *testing.T) {
 			var mp1_g map[string]string = tt.args.m_g
 
 			//Присвоение функции хендлер с заданными параметрами
-			res_Mf_g := MyHandler.GetFunc(mp1_p, mp1_g)
+			res_Mf_g := GetFunc(mp1_p, mp1_g)
 
 			//Определение хендлера
 			h1 := http.HandlerFunc(res_Mf_g)
