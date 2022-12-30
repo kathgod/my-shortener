@@ -24,7 +24,6 @@ func GetFunc(mm_p map[string]string, mm_g map[string]string) func(w http.Respons
 		ug := r.URL.Path
 		buf := strings.Replace(ug, "/", "", -1)
 		out := string(buf)
-		//fmt.Println(out)
 		if mm_g[out] != "" {
 			w.Header().Set("Location", mm_g[out])
 			w.WriteHeader(307)
