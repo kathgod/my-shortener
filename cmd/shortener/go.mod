@@ -1,4 +1,4 @@
-module main
+module shortener
 
 require internal/app v1.0.0
 
