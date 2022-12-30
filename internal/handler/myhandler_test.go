@@ -1,16 +1,17 @@
-package main
+package handler_test
 
 import (
-	"bytes"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"reflect"
 	"testing"
+	"net/http"
+	"net/http/httptest"
+	"bytes"
+	MyHandler "internal/handler"
 	//"io"
 )
 
-func Test_randSeq(t *testing.T) {
+func Test_RandSeq(t *testing.T) {
 	type want struct {
 		ln  int
 		res string
@@ -39,13 +40,13 @@ func Test_randSeq(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got1 := len(randSeq(tt.arg)); got1 != tt.want.ln {
+			if got1 := len(MyHandler.RandSeq(tt.arg)); got1 != tt.want.ln {
 				t.Errorf("randSeq() = %v, want %v", got1, tt.want.ln)
 				fmt.Println("Tes1 Fail")
 			}
 		})
 		t.Run(tt.name, func(t *testing.T) {
-			if got2 := reflect.TypeOf(randSeq(tt.arg)); got2 != reflect.TypeOf(tt.want.res) {
+			if got2 := reflect.TypeOf(MyHandler.RandSeq(tt.arg)); got2 != reflect.TypeOf(tt.want.res) {
 				t.Errorf("randSeq() = %v, want %v", got2, tt.want.res)
 				fmt.Println("Tes2 Fail")
 			}
@@ -53,32 +54,32 @@ func Test_randSeq(t *testing.T) {
 	}
 }
 
-func Test_Myfunc(t *testing.T) {
-	type args struct {
+func Test_Myfunc(t *testing.T){
+	type args struct{
 		m_p map[string]string
 		m_g map[string]string
 	}
 
-	type want struct {
-		code_p int
-		code_g int
+	type want struct{
+		code_p	int
+		code_g	int
 	}
 
 	map2_p := map[string]string{
-		"vk.com":     "RPtDVz",
-		"google.com": "XvhXrs",
-		"yandex.com": "WDSMzc",
+		"vk.com"	:"RPtDVz",
+		"google.com":"XvhXrs",
+		"yandex.com":"WDSMzc",
 	}
 
 	map2_g := map[string]string{
-		"RPtDVz": "vk.com",
-		"XvhXrs": "google.com",
-		"WDSMzc": "yandex.com",
+		"RPtDVz":"vk.com",
+		"XvhXrs":"google.com",
+		"WDSMzc":"yandex.com",
 	}
 
 	//var buf1 string
 
-	tests := []struct {
+	tests := []struct{
 		name string
 		args args
 		want want
@@ -86,23 +87,23 @@ func Test_Myfunc(t *testing.T) {
 		{
 			name: "Test 1",
 			args: args{
-				m_p: map[string]string{},
-				m_g: map[string]string{},
+				m_p:map[string]string{},
+				m_g:map[string]string{},
 			},
 			want: want{
-				code_p: 201,
-				code_g: 400,
+				code_p:201,
+				code_g:400,
 			},
 		},
 		{
 			name: "Test 2",
 			args: args{
-				m_p: map2_p,
-				m_g: map2_g,
+				m_p:map2_p,
+				m_g:map2_g,
 			},
 			want: want{
-				code_p: 201,
-				code_g: 307,
+				code_p:201,
+				code_g:307,
 			},
 		},
 	}
@@ -119,15 +120,15 @@ func Test_Myfunc(t *testing.T) {
 			// Создаем рекордер
 			rec_p := httptest.NewRecorder()
 
-			//Создание map для запроса Post
+			//Создание map для запроса Post 
 			var mp1_p map[string]string = tt.args.m_p
 			var mp1_g map[string]string = tt.args.m_g
 
 			//Присвоение функции хендлер с заданными параметрами
-			res_Mf := Myfunc(mp1_p, mp1_g)
-
+			res_Mf_p := MyHandler.PostFunc(mp1_p, mp1_g)
+			
 			//Определение хендлера
-			h := http.HandlerFunc(res_Mf)
+			h := http.HandlerFunc(res_Mf_p)
 
 			//запуск сервера
 			h.ServeHTTP(rec_p, request_p)
@@ -137,25 +138,25 @@ func Test_Myfunc(t *testing.T) {
 
 			//Сверяем возвращаемый код
 			if res_p.StatusCode != tt.want.code_p {
-				t.Errorf("Expected status code %d, got %d", tt.want.code_p, rec_p.Code)
-			}
+                t.Errorf("Expected status code %d, got %d", tt.want.code_p, rec_p.Code)
+            }
 
-			defer res_p.Body.Close()
-
+            defer res_p.Body.Close()
+      
 		})
 		t.Run(tt.name, func(t *testing.T) {
-			//Задаем Гет реквест
+			//Задаем Гет реквест 
 			request_g := httptest.NewRequest(http.MethodGet, "/XvhXrs", nil)
 
 			//Создаем новый рекордер для Гет
 			rec_g := httptest.NewRecorder()
 
-			//Создание map для запроса Get
+			//Создание map для запроса Get 
 			var mp1_p map[string]string = tt.args.m_p
 			var mp1_g map[string]string = tt.args.m_g
 
 			//Присвоение функции хендлер с заданными параметрами
-			res_Mf_g := Myfunc(mp1_p, mp1_g)
+			res_Mf_g := MyHandler.GetFunc(mp1_p, mp1_g)
 
 			//Определение хендлера
 			h1 := http.HandlerFunc(res_Mf_g)
@@ -168,14 +169,14 @@ func Test_Myfunc(t *testing.T) {
 
 			//Сверяем возвращаемый код
 			if res_g.StatusCode != tt.want.code_g {
-				t.Errorf("Expected status code %d, got %d", tt.want.code_g, rec_g.Code)
-			}
+                t.Errorf("Expected status code %d, got %d", tt.want.code_g, rec_g.Code)
+            }
 
-			H := tt.args.m_g["XvhXrs"]
+            H := tt.args.m_g["XvhXrs"]
 
-			if res_g.Header.Get("Location") != H {
-				t.Errorf("Expected Content-Type %s, got %s", H, res_g.Header.Get("Location"))
-			}
+            if res_g.Header.Get("Location") !=  H{
+                t.Errorf("Expected Content-Type %s, got %s", H, res_g.Header.Get("Location"))
+            }
 		})
 	}
 }
