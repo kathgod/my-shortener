@@ -12,6 +12,10 @@ import (
 
 const portNumber = ":8080"
 
+func MyTest(n int) int {
+	return n * 2
+}
+
 func main() {
 	map_post := make(map[string]string)
 	map_get := make(map[string]string)
