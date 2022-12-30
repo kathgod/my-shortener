@@ -19,7 +19,7 @@ func Test_RandSeq(t *testing.T) {
 		arg  int
 		want want
 	}{
-		{ //TODO: Add test cases.
+		{
 			name: "test1 Length of return value",
 			arg:  6,
 			want: want{
