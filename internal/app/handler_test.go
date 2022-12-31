@@ -11,7 +11,7 @@ import (
 
 func Test_RandSeq(t *testing.T) {
 	type want struct {
-		ln  int
+		ln  int // длина для последовательности
 		res string
 	}
 	tests := []struct {
@@ -52,30 +52,28 @@ func Test_RandSeq(t *testing.T) {
 	}
 }
 
-func Test_Myfunc(t *testing.T) {
+func TestFunc(t *testing.T) {
 	type args struct {
-		m_p map[string]string
-		m_g map[string]string
+		mPost map[string]string
+		mGet  map[string]string
 	}
 
 	type want struct {
-		code_p int
-		code_g int
+		codeP int
+		codeG int
 	}
 
-	map2_p := map[string]string{
+	map2P := map[string]string{
 		"vk.com":     "RPtDVz",
 		"google.com": "XvhXrs",
 		"yandex.com": "WDSMzc",
 	}
 
-	map2_g := map[string]string{
+	map2G := map[string]string{
 		"RPtDVz": "vk.com",
 		"XvhXrs": "google.com",
 		"WDSMzc": "yandex.com",
 	}
-
-	//var buf1 string
 
 	tests := []struct {
 		name string
@@ -85,23 +83,23 @@ func Test_Myfunc(t *testing.T) {
 		{
 			name: "Test 1",
 			args: args{
-				m_p: map[string]string{},
-				m_g: map[string]string{},
+				mPost: map[string]string{},
+				mGet:  map[string]string{},
 			},
 			want: want{
-				code_p: 201,
-				code_g: 400,
+				codeP: 201,
+				codeG: 400,
 			},
 		},
 		{
 			name: "Test 2",
 			args: args{
-				m_p: map2_p,
-				m_g: map2_g,
+				mPost: map2P,
+				mGet:  map2G,
 			},
 			want: want{
-				code_p: 201,
-				code_g: 307,
+				codeP: 201,
+				codeG: 307,
 			},
 		},
 	}
@@ -110,70 +108,70 @@ func Test_Myfunc(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			//Задаем тело запроса Post
-			body_p := bytes.NewBufferString("vk.com")
+			bodyP := bytes.NewBufferString("vk.com")
 
 			//Задаем пост реквест
-			request_p := httptest.NewRequest(http.MethodPost, "/", body_p)
+			requestP := httptest.NewRequest(http.MethodPost, "/", bodyP)
 
 			// Создаем рекордер
-			rec_p := httptest.NewRecorder()
+			recP := httptest.NewRecorder()
 
 			//Создание map для запроса Post
-			var mp1_p map[string]string = tt.args.m_p
-			var mp1_g map[string]string = tt.args.m_g
+			var mp1P = tt.args.mPost
+			var mp1G = tt.args.mGet
 
 			//Присвоение функции хендлер с заданными параметрами
-			res_Mf_p := PostFunc(mp1_p, mp1_g)
+			resMfP := PostFunc(mp1P, mp1G) // Mf в имени - My function
 
 			//Определение хендлера
-			h := http.HandlerFunc(res_Mf_p)
+			h := http.HandlerFunc(resMfP)
 
 			//запуск сервера
-			h.ServeHTTP(rec_p, request_p)
+			h.ServeHTTP(recP, requestP)
 
 			//записываем результат работы сервера, через результат рекордера
-			res_p := rec_p.Result()
+			resP := recP.Result()
 
 			//Сверяем возвращаемый код
-			if res_p.StatusCode != tt.want.code_p {
-				t.Errorf("Expected status code %d, got %d", tt.want.code_p, rec_p.Code)
+			if resP.StatusCode != tt.want.codeP {
+				t.Errorf("Expected status code %d, got %d", tt.want.codeP, recP.Code)
 			}
 
-			defer res_p.Body.Close()
+			defer resP.Body.Close()
 
 		})
 		t.Run(tt.name, func(t *testing.T) {
 			//Задаем Гет реквест
-			request_g := httptest.NewRequest(http.MethodGet, "/XvhXrs", nil)
+			requestG := httptest.NewRequest(http.MethodGet, "/XvhXrs", nil)
 
 			//Создаем новый рекордер для Гет
-			rec_g := httptest.NewRecorder()
+			recG := httptest.NewRecorder()
 
 			//Создание map для запроса Get
-			var mp1_p map[string]string = tt.args.m_p
-			var mp1_g map[string]string = tt.args.m_g
+			var mp1P = tt.args.mPost
+			var mp1G = tt.args.mGet
 
 			//Присвоение функции хендлер с заданными параметрами
-			res_Mf_g := GetFunc(mp1_p, mp1_g)
+			resMfG := GetFunc(mp1P, mp1G)
 
 			//Определение хендлера
-			h1 := http.HandlerFunc(res_Mf_g)
+			h1 := http.HandlerFunc(resMfG)
 
 			//запуск сервера
-			h1.ServeHTTP(rec_g, request_g)
+			h1.ServeHTTP(recG, requestG)
 
 			//записываем результат работы сервера, через результат рекордера
-			res_g := rec_g.Result()
+			resG := recG.Result()
 
 			//Сверяем возвращаемый код
-			if res_g.StatusCode != tt.want.code_g {
-				t.Errorf("Expected status code %d, got %d", tt.want.code_g, rec_g.Code)
+			if resG.StatusCode != tt.want.codeG {
+				t.Errorf("Expected status code %d, got %d", tt.want.codeG, recG.Code)
 			}
 
-			H := tt.args.m_g["XvhXrs"]
+			H := tt.args.mGet["XvhXrs"]
 
-			if res_g.Header.Get("Location") != H {
-				t.Errorf("Expected Content-Type %s, got %s", H, res_g.Header.Get("Location"))
+			if resG.Header.Get("Location") != H {
+				t.Errorf("Expected Content-Type %s, got %s", H, resG.Header.Get("Location"))
 			}
 		})
 	}

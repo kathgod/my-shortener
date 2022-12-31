@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestMyTest(t *testing.T) {
+func TestMyTest(t *testing.T) { //Тестируем функции из мейна
 	type args struct {
 		n int
 	}

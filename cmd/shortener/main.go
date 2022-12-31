@@ -12,34 +12,25 @@ import (
 
 const portNumber = ":8080"
 
-func MyTest(n int) int {
+func MyTest(n int) int { //функция для проверки тесирования
 	return n * 2
 }
 
 func main() {
-	map_post := make(map[string]string)
-	map_get := make(map[string]string)
-
-	res_p := MyHandler.PostFunc(map_post, map_get)
-	res_g := MyHandler.GetFunc(map_post, map_get)
-	res_NAM := MyHandler.NAMfunc()
-
+	mapPost := make(map[string]string)
+	mapGet := make(map[string]string)
+	resP := MyHandler.PostFunc(mapPost, mapGet)
+	resG := MyHandler.GetFunc(mapPost, mapGet)
+	resNam := MyHandler.NotAllowedMethodFunc()
 	rand.Seed(time.Now().UnixNano())
-
 	//http.HandleFunc("/", res_p)
-
 	rtr := chi.NewRouter()
 	//rtr.Use(middleware.Logger)
-	//rtr.Use(middleware.Recoverer)
-
-	rtr.Get("/{id}", res_g)
-
-	rtr.Post("/", res_p)
-
-	rtr.MethodNotAllowed(res_NAM)
-
+	//rtr.Use(middleware.Recovered)
+	rtr.Get("/{id}", resG)
+	rtr.Post("/", resP)
+	rtr.MethodNotAllowed(resNam)
 	fmt.Printf("Starting application on port %v\n", portNumber)
-
 	http.ListenAndServe(portNumber, rtr)
 	//http.ListenAndServe(portNumber, nil)
 
