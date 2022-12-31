@@ -3,8 +3,10 @@ package handler
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -136,7 +138,12 @@ func TestFunc(t *testing.T) {
 			if resPCode != tt.want.codeP {
 				t.Errorf("Expected status code %d, got %d", tt.want.codeP, resPCode)
 			}
-
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				if err != nil {
+					os.Exit(333)
+				}
+			}(recP.Result().Body)
 		})
 		t.Run(tt.name, func(t *testing.T) {
 			//Задаем Гет реквест
@@ -171,6 +178,12 @@ func TestFunc(t *testing.T) {
 			if recG.Result().Header.Get("Location") != H {
 				t.Errorf("Expected Content-Type %s, got %s", H, recG.Result().Header.Get("Location"))
 			}
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				if err != nil {
+					os.Exit(334)
+				}
+			}(recG.Result().Body)
 		})
 	}
 }
