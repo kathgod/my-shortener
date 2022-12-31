@@ -3,7 +3,6 @@ package handler
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -131,19 +130,12 @@ func TestFunc(t *testing.T) {
 			h.ServeHTTP(recP, requestP)
 
 			//записываем результат работы сервера, через результат рекордера
-			resP := recP.Result()
+			resPCode := recP.Result().StatusCode
 
 			//Сверяем возвращаемый код
-			if resP.StatusCode != tt.want.codeP {
-				t.Errorf("Expected status code %d, got %d", tt.want.codeP, recP.Code)
+			if resPCode != tt.want.codeP {
+				t.Errorf("Expected status code %d, got %d", tt.want.codeP, resPCode)
 			}
-
-			defer func(Body io.ReadCloser) {
-				err := Body.Close()
-				if err != nil {
-					fmt.Println("Error close body")
-				}
-			}(resP.Body)
 
 		})
 		t.Run(tt.name, func(t *testing.T) {
@@ -167,17 +159,17 @@ func TestFunc(t *testing.T) {
 			h1.ServeHTTP(recG, requestG)
 
 			//записываем результат работы сервера, через результат рекордера
-			resG := recG.Result()
+			resGCode := recG.Result().StatusCode
 
 			//Сверяем возвращаемый код
-			if resG.StatusCode != tt.want.codeG {
-				t.Errorf("Expected status code %d, got %d", tt.want.codeG, recG.Code)
+			if resGCode != tt.want.codeG {
+				t.Errorf("Expected status code %d, got %d", tt.want.codeG, resGCode)
 			}
 
 			H := tt.args.mGet["XvhXrs"]
 
-			if resG.Header.Get("Location") != H {
-				t.Errorf("Expected Content-Type %s, got %s", H, resG.Header.Get("Location"))
+			if recG.Result().Header.Get("Location") != H {
+				t.Errorf("Expected Content-Type %s, got %s", H, recG.Result().Header.Get("Location"))
 			}
 		})
 	}
