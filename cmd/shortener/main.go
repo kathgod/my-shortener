@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 	MyHandler "urlshortener/internal/app"
 	//"github.com/go-chi/chi/v5/middleware"
@@ -31,7 +32,11 @@ func main() {
 	rtr.Post("/", resP)
 	rtr.MethodNotAllowed(resNam)
 	fmt.Printf("Starting application on port %v\n", portNumber)
-	http.ListenAndServe(portNumber, rtr)
+	err := http.ListenAndServe(portNumber, rtr)
+	if err != nil {
+		os.Exit(100)
+	}
+
 	//http.ListenAndServe(portNumber, nil)
 
 }

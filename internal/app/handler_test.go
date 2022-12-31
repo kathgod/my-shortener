@@ -3,6 +3,7 @@ package handler
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -137,7 +138,12 @@ func TestFunc(t *testing.T) {
 				t.Errorf("Expected status code %d, got %d", tt.want.codeP, recP.Code)
 			}
 
-			defer resP.Body.Close()
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				if err != nil {
+					fmt.Println("Error close body")
+				}
+			}(resP.Body)
 
 		})
 		t.Run(tt.name, func(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -46,7 +47,10 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 			handMapGet[rndRes] = string(bp)
 			resultPost := "http://localhost:8080/" + rndRes
 			w.WriteHeader(201)
-			w.Write([]byte(resultPost))
+			_, err := w.Write([]byte(resultPost))
+			if err != nil {
+				os.Exit(50)
+			}
 		}
 	}
 }
