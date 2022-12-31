@@ -168,13 +168,11 @@ func TestFunc(t *testing.T) {
 
 			//записываем результат работы сервера, через результат рекордера
 			resG := recG.Result()
-			defer func(Body io.ReadCloser) {
-				err := Body.Close()
-				if err != nil {
-					fmt.Println("ERROR 4")
-					os.Exit(4)
-				}
-			}(resG.Body)
+
+			err := resG.Body.Close()
+			if err != nil {
+				os.Exit(444)
+			}
 
 			//Сверяем возвращаемый код
 			if resG.StatusCode != tt.want.codeG {
