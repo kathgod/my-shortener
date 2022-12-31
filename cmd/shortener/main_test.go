@@ -1,6 +1,8 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestMyTest(t *testing.T) {
 	type args struct {

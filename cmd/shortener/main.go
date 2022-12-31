@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	MyHandler "internal/app"
 	"math/rand"
 	"net/http"
 	"time"
+	MyHandler "urlshortener/internal/app"
 	//"github.com/go-chi/chi/v5/middleware"
 )
 
