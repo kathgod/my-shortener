@@ -133,12 +133,6 @@ func TestFunc(t *testing.T) {
 
 			//записываем результат работы сервера, через результат рекордера
 			resP := recP.Result()
-
-			//Сверяем возвращаемый код
-			if resP.StatusCode != tt.want.codeP {
-				t.Errorf("Expected status code %d, got %d", tt.want.codeP, recP.Code)
-			}
-
 			defer func(Body io.ReadCloser) {
 				err := Body.Close()
 				if err != nil {
@@ -147,6 +141,10 @@ func TestFunc(t *testing.T) {
 				}
 			}(resP.Body)
 
+			//Сверяем возвращаемый код
+			if resP.StatusCode != tt.want.codeP {
+				t.Errorf("Expected status code %d, got %d", tt.want.codeP, recP.Code)
+			}
 		})
 		t.Run(tt.name, func(t *testing.T) {
 			//Задаем Гет реквест
@@ -170,6 +168,13 @@ func TestFunc(t *testing.T) {
 
 			//записываем результат работы сервера, через результат рекордера
 			resG := recG.Result()
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				if err != nil {
+					fmt.Println("ERROR 4")
+					os.Exit(4)
+				}
+			}(resG.Body)
 
 			//Сверяем возвращаемый код
 			if resG.StatusCode != tt.want.codeG {
@@ -181,13 +186,7 @@ func TestFunc(t *testing.T) {
 			if resG.Header.Get("Location") != H {
 				t.Errorf("Expected Content-Type %s, got %s", H, resG.Header.Get("Location"))
 			}
-			defer func(Body io.ReadCloser) {
-				err := Body.Close()
-				if err != nil {
-					fmt.Println("ERROR 4")
-					os.Exit(4)
-				}
-			}(resG.Body)
+
 		})
 	}
 }
