@@ -3,7 +3,6 @@ package handler
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -133,13 +132,10 @@ func TestFunc(t *testing.T) {
 
 			//записываем результат работы сервера, через результат рекордера
 			resP := recP.Result()
-			defer func(Body io.ReadCloser) {
-				err := Body.Close()
-				if err != nil {
-					fmt.Println("ERROR 4")
-					os.Exit(4)
-				}
-			}(resP.Body)
+			err := resP.Body.Close()
+			if err != nil {
+				os.Exit(444)
+			}
 
 			//Сверяем возвращаемый код
 			if resP.StatusCode != tt.want.codeP {
