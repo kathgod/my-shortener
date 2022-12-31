@@ -132,18 +132,21 @@ func TestFunc(t *testing.T) {
 			h.ServeHTTP(recP, requestP)
 
 			//записываем результат работы сервера, через результат рекордера
-			resPCode := recP.Result().StatusCode
+			resP := recP.Result()
 
 			//Сверяем возвращаемый код
-			if resPCode != tt.want.codeP {
-				t.Errorf("Expected status code %d, got %d", tt.want.codeP, resPCode)
+			if resP.StatusCode != tt.want.codeP {
+				t.Errorf("Expected status code %d, got %d", tt.want.codeP, recP.Code)
 			}
+
 			defer func(Body io.ReadCloser) {
 				err := Body.Close()
 				if err != nil {
-					os.Exit(333)
+					fmt.Println("ERROR 4")
+					os.Exit(4)
 				}
-			}(recP.Result().Body)
+			}(resP.Body)
+
 		})
 		t.Run(tt.name, func(t *testing.T) {
 			//Задаем Гет реквест
@@ -166,24 +169,25 @@ func TestFunc(t *testing.T) {
 			h1.ServeHTTP(recG, requestG)
 
 			//записываем результат работы сервера, через результат рекордера
-			resGCode := recG.Result().StatusCode
+			resG := recG.Result()
 
 			//Сверяем возвращаемый код
-			if resGCode != tt.want.codeG {
-				t.Errorf("Expected status code %d, got %d", tt.want.codeG, resGCode)
+			if resG.StatusCode != tt.want.codeG {
+				t.Errorf("Expected status code %d, got %d", tt.want.codeG, recG.Code)
 			}
 
 			H := tt.args.mGet["XvhXrs"]
 
-			if recG.Result().Header.Get("Location") != H {
-				t.Errorf("Expected Content-Type %s, got %s", H, recG.Result().Header.Get("Location"))
+			if resG.Header.Get("Location") != H {
+				t.Errorf("Expected Content-Type %s, got %s", H, resG.Header.Get("Location"))
 			}
 			defer func(Body io.ReadCloser) {
 				err := Body.Close()
 				if err != nil {
-					os.Exit(334)
+					fmt.Println("ERROR 4")
+					os.Exit(4)
 				}
-			}(recG.Result().Body)
+			}(resG.Body)
 		})
 	}
 }
