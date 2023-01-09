@@ -3,17 +3,18 @@ package main
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"time"
 	MyHandler "urlshortener/internal/app"
-	//"github.com/go-chi/chi/v5/middleware"
 )
 
+const srError = "Server Error"
 const portNumber = ":8080"
 
-func MyTest(n int) int { //функция для проверки тесирования
+// MyTest функция для проверки тестирования
+func myTest(n int) int {
 	return n * 2
 }
 
@@ -24,19 +25,14 @@ func main() {
 	resG := MyHandler.GetFunc(mapPost, mapGet)
 	resNam := MyHandler.NotAllowedMethodFunc()
 	rand.Seed(time.Now().UnixNano())
-	//http.HandleFunc("/", res_p)
 	rtr := chi.NewRouter()
-	//rtr.Use(middleware.Logger)
-	//rtr.Use(middleware.Recovered)
 	rtr.Get("/{id}", resG)
 	rtr.Post("/", resP)
 	rtr.MethodNotAllowed(resNam)
 	fmt.Printf("Starting application on port %v\n", portNumber)
 	err := http.ListenAndServe(portNumber, rtr)
 	if err != nil {
-		os.Exit(100)
+		log.Println(srError)
 	}
-
-	//http.ListenAndServe(portNumber, nil)
 
 }

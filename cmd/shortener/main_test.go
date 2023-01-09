@@ -1,10 +1,12 @@
 package main
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestMyTest(t *testing.T) { //Тестируем функции из мейна
+// Тестируем функции из мейна
+func TestMyTest(t *testing.T) {
 	type args struct {
 		n int
 	}
@@ -23,9 +25,7 @@ func TestMyTest(t *testing.T) { //Тестируем функции из мей�
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := MyTest(tt.args.n); got != tt.want {
-				t.Errorf("MyTest() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, myTest(tt.args.n), tt.want, "MyTest() = %v, want %v")
 		})
 	}
 }

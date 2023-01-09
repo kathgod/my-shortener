@@ -2,13 +2,15 @@ package handler
 
 import (
 	"bytes"
-	"fmt"
+	"github.com/stretchr/testify/assert"
+	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"reflect"
 	"testing"
 )
+
+const resServError = "Server working result Error"
 
 func Test_RandSeq(t *testing.T) {
 	type want struct {
@@ -39,16 +41,10 @@ func Test_RandSeq(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got1 := len(RandSeq(tt.arg)); got1 != tt.want.ln {
-				t.Errorf("randSeq() = %v, want %v", got1, tt.want.ln)
-				fmt.Println("Tes1 Fail")
-			}
+			assert.Equal(t, len(randSeq(tt.arg)), tt.want.ln, "\"randSeq() = %v, want %v\", len(randSeq(tt.arg)), tt.want.ln")
 		})
 		t.Run(tt.name, func(t *testing.T) {
-			if got2 := reflect.TypeOf(RandSeq(tt.arg)); got2 != reflect.TypeOf(tt.want.res) {
-				t.Errorf("randSeq() = %v, want %v", got2, tt.want.res)
-				fmt.Println("Tes2 Fail")
-			}
+			assert.Equal(t, reflect.TypeOf(randSeq(tt.arg)), reflect.TypeOf(tt.want.res), "randSeq() = %v, want %v", reflect.TypeOf(randSeq(tt.arg)), reflect.TypeOf(tt.want.res))
 		})
 	}
 }
@@ -134,7 +130,7 @@ func TestFunc(t *testing.T) {
 			resP := recP.Result()
 			err := resP.Body.Close()
 			if err != nil {
-				os.Exit(444)
+				log.Println(resServError)
 			}
 
 			//Сверяем возвращаемый код
@@ -167,10 +163,11 @@ func TestFunc(t *testing.T) {
 
 			err := resG.Body.Close()
 			if err != nil {
-				os.Exit(444)
+				log.Println(resServError)
 			}
 
 			//Сверяем возвращаемый код
+
 			if resG.StatusCode != tt.want.codeG {
 				t.Errorf("Expected status code %d, got %d", tt.want.codeG, recG.Code)
 			}
