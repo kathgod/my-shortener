@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"io"
 	"log"
 	"math/rand"
@@ -74,5 +75,47 @@ func NotAllowedMethodFunc() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(notAllowMethodError)
 		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
+type UrlLongAndShort struct {
+	OriginalUrl string `json:"url,omitempty"`
+	ShortUrl    string `json:"result,omitempty"`
+}
+
+func PostFuncApiShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		urlStruct := UrlLongAndShort{}
+		rawBsp, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Println(postBodyError)
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			if err := json.Unmarshal([]byte(rawBsp), &urlStruct); err != nil {
+				log.Println(postBodyError)
+				w.WriteHeader(http.StatusBadRequest)
+			}
+			rndRes := randSeq(6)
+			for {
+				if handMapGet[urlStruct.OriginalUrl] != "" {
+					rndRes = randSeq(6)
+				} else {
+					break
+				}
+			}
+			handMapPost[urlStruct.OriginalUrl] = rndRes
+			handMapGet[rndRes] = urlStruct.OriginalUrl
+			urlStruct.OriginalUrl = ""
+			urlStruct.ShortUrl = rndRes
+			shUrlByteFormat, _ := json.Marshal(urlStruct)
+			w.WriteHeader(http.StatusCreated)
+			w.Header().Set("Content-Type", "application/json")
+			_, err := w.Write(shUrlByteFormat)
+			if err != nil {
+				http.Error(w, "Post request error", http.StatusBadRequest)
+			}
+
+		}
+
 	}
 }

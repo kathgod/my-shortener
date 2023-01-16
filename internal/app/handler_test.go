@@ -181,3 +181,26 @@ func TestFunc(t *testing.T) {
 		})
 	}
 }
+
+/*func TestPostFuncApiShorten(t *testing.T) {
+	type args struct {
+		mPost map[string]string
+		mGet  map[string]string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "Test jsPost",
+			args: args{
+				mPost: map[string]string{},
+				mGet:  map[string]string{},
+			},
+			want: {},
+		},
+	}
+
+}*/
