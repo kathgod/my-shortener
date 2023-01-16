@@ -46,6 +46,8 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 		baseUrl := os.Getenv("BASE_URL")
 		if baseUrl == "" {
 			baseUrl = "http://localhost:8080/"
+		} else {
+			baseUrl = baseUrl + "/"
 		}
 		bp, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -92,6 +94,8 @@ func PostFuncApiShorten(handMapPost map[string]string, handMapGet map[string]str
 		baseUrl := os.Getenv("BASE_URL")
 		if baseUrl == "" {
 			baseUrl = "http://localhost:8080/"
+		} else {
+			baseUrl = baseUrl + "/"
 		}
 		urlStruct := UrlLongAndShort{}
 		rawBsp, err := io.ReadAll(r.Body)
