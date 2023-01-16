@@ -108,8 +108,9 @@ func PostFuncApiShorten(handMapPost map[string]string, handMapGet map[string]str
 			urlStruct.OriginalUrl = ""
 			urlStruct.ShortUrl = rndRes
 			shUrlByteFormat, _ := json.Marshal(urlStruct)
-			w.WriteHeader(http.StatusCreated)
 			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			//w.Header().Set("Content-Type", "application/json")
 			_, err := w.Write(shUrlByteFormat)
 			if err != nil {
 				http.Error(w, "Post request error", http.StatusBadRequest)
