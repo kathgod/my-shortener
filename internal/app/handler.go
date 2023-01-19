@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bufio"
 	"encoding/json"
 	"io"
 	"log"
@@ -43,11 +44,23 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		baseUrl := os.Getenv("BASE_URL")
-		if baseUrl == "" {
-			baseUrl = "http://localhost:8080/"
+		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
+		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND, 0777)
+		defer storageFile.Close()
+		if fileError == nil {
+			count := 0
+			for range handMapPost {
+				count++
+			}
+			if count == 0 {
+				Recovery(handMapPost, handMapGet, storageFile)
+			}
+		}
+		baseURL := os.Getenv("BASE_URL")
+		if baseURL == "" {
+			baseURL = "http://localhost:8080/"
 		} else {
-			baseUrl = baseUrl + "/"
+			baseURL = baseURL + "/"
 		}
 		bp, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -64,7 +77,9 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 			}
 			handMapPost[string(bp)] = rndRes
 			handMapGet[rndRes] = string(bp)
-			resultPost := baseUrl + rndRes
+			addToFile := string(bp) + "@" + rndRes + "\n"
+			storageFile.Write([]byte(addToFile))
+			resultPost := baseURL + rndRes
 			w.WriteHeader(http.StatusCreated)
 			_, err := w.Write([]byte(resultPost))
 			if err != nil {
@@ -84,20 +99,34 @@ func NotAllowedMethodFunc() func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type UrlLongAndShort struct {
-	OriginalUrl string `json:"url,omitempty"`
-	ShortUrl    string `json:"result,omitempty"`
+type URLLongAndShort struct {
+	OriginalURL string `json:"url,omitempty"`
+	ShortURL    string `json:"result,omitempty"`
 }
 
-func PostFuncApiShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
+// PostFuncAPIShorten бработчик Post запросов для эндпоинта api/shorten/
+func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		baseUrl := os.Getenv("BASE_URL")
-		if baseUrl == "" {
-			baseUrl = "http://localhost:8080/"
-		} else {
-			baseUrl = baseUrl + "/"
+		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
+		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND, 0777)
+		defer storageFile.Close()
+		if fileError == nil {
+			count := 0
+			for range handMapPost {
+				count++
+			}
+			if count == 0 {
+				Recovery(handMapPost, handMapGet, storageFile)
+			}
 		}
-		urlStruct := UrlLongAndShort{}
+
+		baseURL := os.Getenv("BASE_URL")
+		if baseURL == "" {
+			baseURL = "http://localhost:8080/"
+		} else {
+			baseURL = baseURL + "/"
+		}
+		urlStruct := URLLongAndShort{}
 		rawBsp, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Println(postBodyError)
@@ -109,20 +138,23 @@ func PostFuncApiShorten(handMapPost map[string]string, handMapGet map[string]str
 			}
 			rndRes := randSeq(6)
 			for {
-				if handMapGet[urlStruct.OriginalUrl] != "" {
+				if handMapGet[rndRes] != "" {
 					rndRes = randSeq(6)
 				} else {
 					break
 				}
 			}
-			handMapPost[urlStruct.OriginalUrl] = rndRes
-			handMapGet[rndRes] = urlStruct.OriginalUrl
-			urlStruct.OriginalUrl = ""
-			urlStruct.ShortUrl = baseUrl + rndRes
-			shUrlByteFormat, _ := json.Marshal(urlStruct)
+
+			handMapPost[urlStruct.OriginalURL] = rndRes
+			handMapGet[rndRes] = urlStruct.OriginalURL
+			addToFile := urlStruct.OriginalURL + "@" + rndRes + "\n"
+			storageFile.Write([]byte(addToFile))
+			urlStruct.OriginalURL = ""
+			urlStruct.ShortURL = baseURL + rndRes
+			shURLByteFormat, _ := json.Marshal(urlStruct)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			_, err := w.Write(shUrlByteFormat)
+			_, err := w.Write(shURLByteFormat)
 			if err != nil {
 				http.Error(w, "Post request error", http.StatusBadRequest)
 			}
@@ -130,4 +162,20 @@ func PostFuncApiShorten(handMapPost map[string]string, handMapGet map[string]str
 		}
 
 	}
+}
+
+func Recovery(handMapPost map[string]string, handMapGet map[string]string, file *os.File) {
+
+	file.Seek(0, 0)
+	mReader := bufio.NewReader(file)
+	for {
+		data1, err1 := mReader.ReadBytes('@')
+		data2, err2 := mReader.ReadBytes('\n')
+		if err1 != nil || err2 != nil {
+			break
+		}
+		handMapPost[strings.Replace(string(data1), "@", "", -1)] = strings.Replace(string(data2), "\n", "", -1)
+		handMapGet[strings.Replace(string(data2), "\n", "", -1)] = strings.Replace(string(data1), "@", "", -1)
+	}
+
 }
