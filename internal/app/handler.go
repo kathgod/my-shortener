@@ -13,6 +13,9 @@ import (
 
 const postBodyError = "Bad Post request body"
 const notAllowMethodError = "Not Allow method Error "
+const closeFileError = "Close File Error"
+const writeFileError = "Write into the File"
+const seekError = "Seek Error"
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -29,6 +32,24 @@ func randSeq(n int) string {
 func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
+		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
+		if fileError == nil {
+			count := 0
+			for range handMapGet {
+				count++
+			}
+			if count == 0 {
+				mokMap := map[string]string{}
+				Recovery(mokMap, handMapGet, storageFile)
+			}
+		}
+		defer func(storageFile *os.File) {
+			err := storageFile.Close()
+			if err != nil {
+				log.Println(closeFileError)
+			}
+		}(storageFile)
 		urlGet := r.URL.Path
 		out := strings.Replace(urlGet, "/", "", -1)
 		if handMapGet[out] != "" {
@@ -46,7 +67,6 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 	return func(w http.ResponseWriter, r *http.Request) {
 		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-		defer storageFile.Close()
 		if fileError == nil {
 			count := 0
 			for range handMapPost {
@@ -56,6 +76,12 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				Recovery(handMapPost, handMapGet, storageFile)
 			}
 		}
+		defer func(storageFile *os.File) {
+			err := storageFile.Close()
+			if err != nil {
+				log.Println(closeFileError)
+			}
+		}(storageFile)
 		baseURL := os.Getenv("BASE_URL")
 		if baseURL == "" {
 			baseURL = "http://localhost:8080/"
@@ -78,7 +104,12 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 			handMapPost[string(bp)] = rndRes
 			handMapGet[rndRes] = string(bp)
 			addToFile := string(bp) + "@" + rndRes + "\n"
-			storageFile.Write([]byte(addToFile))
+			if fileError == nil {
+				_, err2 := storageFile.Write([]byte(addToFile))
+				if err2 != nil {
+					log.Println(writeFileError)
+				}
+			}
 			resultPost := baseURL + rndRes
 			w.WriteHeader(http.StatusCreated)
 			_, err := w.Write([]byte(resultPost))
@@ -109,7 +140,6 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 	return func(w http.ResponseWriter, r *http.Request) {
 		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-		defer storageFile.Close()
 		if fileError == nil {
 			count := 0
 			for range handMapPost {
@@ -119,7 +149,12 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 				Recovery(handMapPost, handMapGet, storageFile)
 			}
 		}
-
+		defer func(storageFile *os.File) {
+			err := storageFile.Close()
+			if err != nil {
+				log.Println(closeFileError)
+			}
+		}(storageFile)
 		baseURL := os.Getenv("BASE_URL")
 		if baseURL == "" {
 			baseURL = "http://localhost:8080/"
@@ -148,7 +183,12 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 			handMapPost[urlStruct.OriginalURL] = rndRes
 			handMapGet[rndRes] = urlStruct.OriginalURL
 			addToFile := urlStruct.OriginalURL + "@" + rndRes + "\n"
-			storageFile.Write([]byte(addToFile))
+			if fileError == nil {
+				_, err := storageFile.Write([]byte(addToFile))
+				if err != nil {
+					log.Println(writeFileError)
+				}
+			}
 			urlStruct.OriginalURL = ""
 			urlStruct.ShortURL = baseURL + rndRes
 			shURLByteFormat, _ := json.Marshal(urlStruct)
@@ -166,7 +206,10 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 
 func Recovery(handMapPost map[string]string, handMapGet map[string]string, file *os.File) {
 
-	file.Seek(0, 0)
+	_, err := file.Seek(0, 0)
+	if err != nil {
+		log.Println(seekError)
+	}
 	mReader := bufio.NewReader(file)
 	for {
 		data1, err1 := mReader.ReadBytes('@')
