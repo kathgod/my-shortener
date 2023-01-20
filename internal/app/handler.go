@@ -45,7 +45,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
-		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND, 0777)
+		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		defer storageFile.Close()
 		if fileError == nil {
 			count := 0
@@ -108,7 +108,7 @@ type URLLongAndShort struct {
 func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
-		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND, 0777)
+		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		defer storageFile.Close()
 		if fileError == nil {
 			count := 0
