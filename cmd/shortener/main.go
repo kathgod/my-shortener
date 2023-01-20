@@ -29,7 +29,7 @@ func main() {
 	resP := MyHandler.PostFunc(mapPost, mapGet)
 	resG := MyHandler.GetFunc(mapPost, mapGet)
 	resNam := MyHandler.NotAllowedMethodFunc()
-	resPAS := MyHandler.PostFuncApiShorten(mapPost, mapGet)
+	resPAS := MyHandler.PostFuncAPIShorten(mapPost, mapGet)
 	rand.Seed(time.Now().UnixNano())
 	rtr := chi.NewRouter()
 	rtr.Get("/{id}", resG)
