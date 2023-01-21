@@ -240,15 +240,13 @@ func HandParam(name string, flg *string) string {
 	if globEnv != "" {
 		res = globEnv
 	} else {
-		switch name {
-		case "SERVER_ADDRESS":
-			res = *flg
-		case "BASE_URL":
-			res = *flg
-			res = res + "/"
-		case "FILE_STORAGE_PATH":
-			res = *flg
-		}
+		res = *flg
+	}
+	switch name {
+	case "SERVER_ADDRESS":
+	case "BASE_URL":
+		res = res + "/"
+	case "FILE_STORAGE_PATH":
 	}
 	return res
 }
