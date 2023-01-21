@@ -17,6 +17,7 @@ const notAllowMethodError = "Not Allow method Error "
 const closeFileError = "Close File Error"
 const writeFileError = "Write into the File"
 const seekError = "Seek Error"
+const openFileError = "Open File Error"
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -68,7 +69,16 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 	return func(w http.ResponseWriter, r *http.Request) {
 		fileStoragePath := HandParam("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-		if fileError == nil {
+		if fileError != nil {
+			log.Println(openFileError)
+		}
+		defer func(storageFile *os.File) {
+			err := storageFile.Close()
+			if err != nil {
+				log.Println(closeFileError)
+			}
+		}(storageFile)
+		if fileStoragePath != "" {
 			count := 0
 			for range handMapPost {
 				count++
@@ -77,12 +87,6 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				recovery(handMapPost, handMapGet, storageFile)
 			}
 		}
-		defer func(storageFile *os.File) {
-			err := storageFile.Close()
-			if err != nil {
-				log.Println(closeFileError)
-			}
-		}(storageFile)
 		baseURL := HandParam("BASE_URL")
 		bp, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -136,7 +140,16 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 	return func(w http.ResponseWriter, r *http.Request) {
 		fileStoragePath := HandParam("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-		if fileError == nil {
+		if fileError != nil {
+			log.Println(openFileError)
+		}
+		defer func(storageFile *os.File) {
+			err := storageFile.Close()
+			if err != nil {
+				log.Println(closeFileError)
+			}
+		}(storageFile)
+		if fileStoragePath != "" {
 			count := 0
 			for range handMapPost {
 				count++
@@ -145,12 +158,6 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 				recovery(handMapPost, handMapGet, storageFile)
 			}
 		}
-		defer func(storageFile *os.File) {
-			err := storageFile.Close()
-			if err != nil {
-				log.Println(closeFileError)
-			}
-		}(storageFile)
 		baseURL := HandParam("BASE_URL")
 		urlStruct := URLLongAndShort{}
 		rawBsp, err := io.ReadAll(r.Body)
