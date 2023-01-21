@@ -34,7 +34,7 @@ func randSeq(n int) string {
 func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := HandParam("FILE_STORAGE_PATH")
+		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError == nil {
 			count := 0
@@ -67,7 +67,7 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := HandParam("FILE_STORAGE_PATH")
+		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError != nil {
 			log.Println(openFileError)
@@ -221,21 +221,21 @@ func recovery(handMapPost map[string]string, handMapGet map[string]string, file 
 
 }
 
-func HandParam(n string) string {
+func HandParam(name string) string {
 	res := ""
-	globEnv := os.Getenv(n)
+	globEnv := os.Getenv(name)
 	if globEnv != "" {
 		res = globEnv
 	} else {
 		srvAddress := flag.String("a", "localhost:8080", "SERVER_ADDRESS")
 		bsURL := flag.String("b", "http://localhost:8080", "BASE_URL")
 		flStoragePth := flag.String("f", "", "FILE_STORAGE_PATH")
-		flag.Parse()
-		switch n {
+		switch name {
 		case "SERVER_ADDRESS":
 			res = *srvAddress
 		case "BASE_URL":
-			res = *bsURL + "/"
+			res = *bsURL
+			res = res + "/"
 		case "FILE_STORAGE_PATH":
 			res = *flStoragePth
 		}
