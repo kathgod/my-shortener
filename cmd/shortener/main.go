@@ -17,9 +17,15 @@ func myTest(n int) int {
 	return n * 2
 }
 
+var srvAddress *string
+
+func init() {
+	srvAddress = flag.String("a", "localhost:8080", "SERVER_ADDRESS")
+}
+
 func main() {
 	flag.Parse()
-	portNumber := MyHandler.HandParam("SERVER_ADDRESS")
+	portNumber := MyHandler.HandParam("SERVER_ADDRESS", srvAddress)
 	mapPost := make(map[string]string)
 	mapGet := make(map[string]string)
 	resP := MyHandler.PostFunc(mapPost, mapGet)
