@@ -100,7 +100,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 			handMapPost[string(bp)] = rndRes
 			handMapGet[rndRes] = string(bp)
 			addToFile := string(bp) + "@" + rndRes + "\n"
-			if fileError == nil {
+			if fileStoragePath != "" {
 				_, err2 := storageFile.Write([]byte(addToFile))
 				if err2 != nil {
 					log.Println(writeFileError)
@@ -174,7 +174,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 			handMapPost[urlStruct.OriginalURL] = rndRes
 			handMapGet[rndRes] = urlStruct.OriginalURL
 			addToFile := urlStruct.OriginalURL + "@" + rndRes + "\n"
-			if fileError == nil {
+			if fileStoragePath != "" {
 				_, err := storageFile.Write([]byte(addToFile))
 				if err != nil {
 					log.Println(writeFileError)
