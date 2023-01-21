@@ -3,6 +3,7 @@ package handler
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"io"
 	"log"
 	"math/rand"
@@ -32,7 +33,7 @@ func randSeq(n int) string {
 func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
+		fileStoragePath := HandParam("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError == nil {
 			count := 0
@@ -41,7 +42,7 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 			}
 			if count == 0 {
 				mokMap := map[string]string{}
-				Recovery(mokMap, handMapGet, storageFile)
+				recovery(mokMap, handMapGet, storageFile)
 			}
 		}
 		defer func(storageFile *os.File) {
@@ -65,7 +66,7 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
+		fileStoragePath := HandParam("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError == nil {
 			count := 0
@@ -73,7 +74,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				count++
 			}
 			if count == 0 {
-				Recovery(handMapPost, handMapGet, storageFile)
+				recovery(handMapPost, handMapGet, storageFile)
 			}
 		}
 		defer func(storageFile *os.File) {
@@ -82,12 +83,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				log.Println(closeFileError)
 			}
 		}(storageFile)
-		baseURL := os.Getenv("BASE_URL")
-		if baseURL == "" {
-			baseURL = "http://localhost:8080/"
-		} else {
-			baseURL = baseURL + "/"
-		}
+		baseURL := HandParam("BASE_URL")
 		bp, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Println(postBodyError)
@@ -138,7 +134,7 @@ type URLLongAndShort struct {
 // PostFuncAPIShorten бработчик Post запросов для эндпоинта api/shorten/
 func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
+		fileStoragePath := HandParam("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError == nil {
 			count := 0
@@ -146,7 +142,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 				count++
 			}
 			if count == 0 {
-				Recovery(handMapPost, handMapGet, storageFile)
+				recovery(handMapPost, handMapGet, storageFile)
 			}
 		}
 		defer func(storageFile *os.File) {
@@ -155,12 +151,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 				log.Println(closeFileError)
 			}
 		}(storageFile)
-		baseURL := os.Getenv("BASE_URL")
-		if baseURL == "" {
-			baseURL = "http://localhost:8080/"
-		} else {
-			baseURL = baseURL + "/"
-		}
+		baseURL := HandParam("BASE_URL")
 		urlStruct := URLLongAndShort{}
 		rawBsp, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -204,7 +195,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 	}
 }
 
-func Recovery(handMapPost map[string]string, handMapGet map[string]string, file *os.File) {
+func recovery(handMapPost map[string]string, handMapGet map[string]string, file *os.File) {
 
 	_, err := file.Seek(0, 0)
 	if err != nil {
@@ -221,4 +212,26 @@ func Recovery(handMapPost map[string]string, handMapGet map[string]string, file 
 		handMapGet[strings.Replace(string(data2), "\n", "", -1)] = strings.Replace(string(data1), "@", "", -1)
 	}
 
+}
+
+func HandParam(n string) string {
+	res := ""
+	globEnv := os.Getenv(n)
+	if globEnv != "" {
+		res = globEnv
+	} else {
+		srvAddress := flag.String("a", "localhost:8080", "SERVER_ADDRESS")
+		bsURL := flag.String("b", "http://localhost:8080", "BASE_URL")
+		flStoragePth := flag.String("f", "", "FILE_STORAGE_PATH")
+		flag.Parse()
+		switch n {
+		case "SERVER_ADDRESS":
+			res = *srvAddress
+		case "BASE_URL":
+			res = *bsURL + "/"
+		case "FILE_STORAGE_PATH":
+			res = *flStoragePth
+		}
+	}
+	return res
 }
