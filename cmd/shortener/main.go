@@ -1,18 +1,16 @@
 package main
 
 import (
+	"flag"
 	"github.com/go-chi/chi/v5"
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"time"
 	MyHandler "urlshortener/internal/app"
 )
 
 const srError = "Server Error"
-
-// const portNumber = ":8080"
 
 // MyTest функция для проверки тестирования
 func myTest(n int) int {
@@ -20,10 +18,8 @@ func myTest(n int) int {
 }
 
 func main() {
-	portNumber := os.Getenv("SERVER_ADDRESS")
-	if portNumber == "" {
-		portNumber = "localhost:8080"
-	}
+	flag.Parse()
+	portNumber := MyHandler.HandParam("SERVER_ADDRESS")
 	mapPost := make(map[string]string)
 	mapGet := make(map[string]string)
 	resP := MyHandler.PostFunc(mapPost, mapGet)

@@ -34,9 +34,18 @@ func randSeq(n int) string {
 func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
+		fileStoragePath := HandParam("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-		if fileError == nil {
+		if fileError != nil {
+			log.Println(openFileError)
+		}
+		defer func(storageFile *os.File) {
+			err := storageFile.Close()
+			if err != nil {
+				log.Println(closeFileError)
+			}
+		}(storageFile)
+		if fileStoragePath != "" {
 			count := 0
 			for range handMapGet {
 				count++
@@ -46,12 +55,6 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 				recovery(mokMap, handMapGet, storageFile)
 			}
 		}
-		defer func(storageFile *os.File) {
-			err := storageFile.Close()
-			if err != nil {
-				log.Println(closeFileError)
-			}
-		}(storageFile)
 		urlGet := r.URL.Path
 		out := strings.Replace(urlGet, "/", "", -1)
 		if handMapGet[out] != "" {
@@ -67,7 +70,7 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := os.Getenv("FILE_STORAGE_PATH")
+		fileStoragePath := HandParam("FILE_STORAGE_PATH")
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError != nil {
 			log.Println(openFileError)
