@@ -266,7 +266,7 @@ func HandParam(name string, flg *string) string {
 
 func decompress(data []byte, err0 error) ([]byte, error) {
 	if err0 != nil {
-		return nil, fmt.Errorf("Error 0 %v", err0)
+		return nil, fmt.Errorf("error 0 %v", err0)
 	}
 
 	r, err1 := gzip.NewReader(bytes.NewReader(data))
@@ -288,19 +288,19 @@ func decompress(data []byte, err0 error) ([]byte, error) {
 func compress(data []byte) ([]byte, error) {
 	var b bytes.Buffer
 	w := gzip.NewWriter(&b)
-	var resClose error
-	defer func(w *gzip.Writer, resClose error) {
-		err := w.Close()
-		if err != nil {
-			resClose = err
+	_, err := w.Write(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed write data to compress temporary buffer: %v", err)
+	}
+	var resClose error = nil
+	func(w *gzip.Writer, resClose error) {
+		err0 := w.Close()
+		if err0 != nil {
+			resClose = err0
 		}
 	}(w, resClose)
 	if resClose != nil {
 		return nil, fmt.Errorf("%v", resClose)
-	}
-	_, err := w.Write(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed write data to compress temporary buffer: %v", err)
 	}
 	return b.Bytes(), nil
 }
