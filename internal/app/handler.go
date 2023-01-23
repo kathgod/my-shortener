@@ -292,15 +292,9 @@ func compress(data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed write data to compress temporary buffer: %v", err)
 	}
-	var resClose error = nil
-	func(w *gzip.Writer, resClose error) {
-		err0 := w.Close()
-		if err0 != nil {
-			resClose = err0
-		}
-	}(w, resClose)
-	if resClose != nil {
-		return nil, fmt.Errorf("%v", resClose)
+	err0 := w.Close()
+	if err0 != nil {
+		return nil, fmt.Errorf("%v", err0)
 	}
 	return b.Bytes(), nil
 }
