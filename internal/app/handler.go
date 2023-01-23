@@ -87,7 +87,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 		fileStoragePath := HandParam("FILE_STORAGE_PATH", flStoragePth)
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError != nil {
-			log.Println(openFileError)
+			log.Println(openFileError, fileStoragePath)
 		}
 		defer func(storageFile *os.File) {
 			err := storageFile.Close()
@@ -105,9 +105,10 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 			}
 		}
 		baseURL := HandParam("BASE_URL", bsURL)
-		bp, err := Decompress(io.ReadAll(r.Body))
+		bp, err := decompress(io.ReadAll(r.Body))
 		if err != nil {
 			log.Println(postBodyError)
+			log.Println(err)
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
 			rndRes := randSeq(6)
@@ -130,7 +131,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 			resultPost := baseURL + rndRes
 			bResultPost := []byte(resultPost)
 			if r.Header.Get("Content-Encoding ") == "gzip" {
-				bResultPost, err = Compress([]byte(resultPost))
+				bResultPost, err = compress([]byte(resultPost))
 				if err != nil {
 					log.Println(compressError)
 				}
@@ -263,14 +264,14 @@ func HandParam(name string, flg *string) string {
 	return res
 }
 
-func Decompress(data []byte, err0 error) ([]byte, error) {
+func decompress(data []byte, err0 error) ([]byte, error) {
 	if err0 != nil {
-		return nil, fmt.Errorf("%v", err0)
+		return nil, fmt.Errorf("Error 0 %v", err0)
 	}
 
 	r, err1 := gzip.NewReader(bytes.NewReader(data))
 	if err1 != nil {
-		return nil, fmt.Errorf("%v", err1)
+		return data, nil
 	}
 	defer r.Close()
 
@@ -284,7 +285,7 @@ func Decompress(data []byte, err0 error) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func Compress(data []byte) ([]byte, error) {
+func compress(data []byte) ([]byte, error) {
 	var b bytes.Buffer
 	w := gzip.NewWriter(&b)
 	var resClose error
