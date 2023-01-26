@@ -2,7 +2,10 @@ package handler
 
 import (
 	"bufio"
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -19,6 +22,7 @@ const (
 	writeFileError      = "Write into the File"
 	seekError           = "Seek Error"
 	openFileError       = "Open File Error"
+	compressError       = "Compress file"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -93,7 +97,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 		}
 
 		baseURL := ResHandParam.BU
-		bp, err := io.ReadAll(r.Body)
+		bp, err := decompress(io.ReadAll(r.Body))
 		if err != nil {
 			log.Println(postBodyError)
 			w.WriteHeader(http.StatusBadRequest)
@@ -116,11 +120,19 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				}
 			}
 			resultPost := baseURL + rndRes
+			bResultPost := []byte(resultPost)
+			if r.Header.Get("Content-Encoding ") == "gzip" {
+				bResultPost, err = compress([]byte(resultPost))
+				if err != nil {
+					log.Println(compressError)
+				}
+				w.Header().Set("Accept-Encoding", "gzip")
+			}
 			w.WriteHeader(http.StatusCreated)
-			_, err := w.Write([]byte(resultPost))
+			_, err := w.Write(bResultPost)
 			if err != nil {
 				http.Error(w, "Post request error", http.StatusBadRequest)
-				//os.Exit(50)
+
 			}
 		}
 	}
@@ -252,4 +264,41 @@ func HandParam(name string, flg *string) string {
 var ResHandParam struct {
 	BU  string
 	FSP string
+}
+
+// Функция декомпресии тела запроса
+func decompress(data []byte, err0 error) ([]byte, error) {
+	if err0 != nil {
+		return nil, fmt.Errorf("error 0 %v", err0)
+	}
+
+	r, err1 := gzip.NewReader(bytes.NewReader(data))
+	if err1 != nil {
+		return data, nil
+	}
+	defer r.Close()
+
+	var b bytes.Buffer
+
+	_, err := b.ReadFrom(r)
+	if err != nil {
+		return data, nil
+	}
+
+	return b.Bytes(), nil
+}
+
+// Функция компресии тела ответа
+func compress(data []byte) ([]byte, error) {
+	var b bytes.Buffer
+	w := gzip.NewWriter(&b)
+	_, err := w.Write(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed write data to compress temporary buffer: %v", err)
+	}
+	err0 := w.Close()
+	if err0 != nil {
+		return nil, fmt.Errorf("%v", err0)
+	}
+	return b.Bytes(), nil
 }
