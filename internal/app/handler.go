@@ -2,11 +2,7 @@ package handler
 
 import (
 	"bufio"
-	"bytes"
-	"compress/gzip"
 	"encoding/json"
-	"flag"
-	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -15,25 +11,17 @@ import (
 	"strings"
 )
 
-const postBodyError = "Bad Post request body"
-const notAllowMethodError = "Not Allow method Error "
-const closeFileError = "Close File Error"
-const writeFileError = "Write into the File"
-const seekError = "Seek Error"
-const openFileError = "Open File Error"
-const compressError = "compress Error"
-
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-var (
-	bsURL        *string
-	flStoragePth *string
+// Константы ошибок
+const (
+	postBodyError       = "Bad Post request body"
+	notAllowMethodError = "Not Allow method Error "
+	closeFileError      = "Close File Error"
+	writeFileError      = "Write into the File"
+	seekError           = "Seek Error"
+	openFileError       = "Open File Error"
 )
 
-func init() {
-	bsURL = flag.String("b", "http://localhost:8080", "BASE_URL")
-	flStoragePth = flag.String("f", "", "FILE_STORAGE_PATH")
-}
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 // Функция для формирования случайной поледовательности
 func randSeq(n int) string {
@@ -46,9 +34,8 @@ func randSeq(n int) string {
 
 // GetFunc Обработчик для Get запросов
 func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := HandParam("FILE_STORAGE_PATH", flStoragePth)
+		fileStoragePath := ResHandParam.FSP
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError != nil {
 			log.Println(openFileError)
@@ -69,6 +56,7 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 				recovery(mokMap, handMapGet, storageFile)
 			}
 		}
+
 		urlGet := r.URL.Path
 		out := strings.Replace(urlGet, "/", "", -1)
 		if handMapGet[out] != "" {
@@ -82,12 +70,11 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 
 // PostFunc Обработчик Post запросов
 func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := HandParam("FILE_STORAGE_PATH", flStoragePth)
+		fileStoragePath := ResHandParam.FSP
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError != nil {
-			log.Println(openFileError, fileStoragePath)
+			log.Println(openFileError)
 		}
 		defer func(storageFile *os.File) {
 			err := storageFile.Close()
@@ -104,11 +91,11 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				recovery(handMapPost, handMapGet, storageFile)
 			}
 		}
-		baseURL := HandParam("BASE_URL", bsURL)
-		bp, err := decompress(io.ReadAll(r.Body))
+
+		baseURL := ResHandParam.BU
+		bp, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Println(postBodyError)
-			log.Println(err)
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
 			rndRes := randSeq(6)
@@ -129,19 +116,11 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				}
 			}
 			resultPost := baseURL + rndRes
-			bResultPost := []byte(resultPost)
-			if r.Header.Get("Content-Encoding ") == "gzip" {
-				bResultPost, err = compress([]byte(resultPost))
-				if err != nil {
-					log.Println(compressError)
-				}
-				w.Header().Set("Accept-Encoding", "gzip")
-			}
 			w.WriteHeader(http.StatusCreated)
-			_, err := w.Write(bResultPost)
+			_, err := w.Write([]byte(resultPost))
 			if err != nil {
 				http.Error(w, "Post request error", http.StatusBadRequest)
-
+				//os.Exit(50)
 			}
 		}
 	}
@@ -156,6 +135,7 @@ func NotAllowedMethodFunc() func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// URLLongAndShort Структура для джейсон объектов
 type URLLongAndShort struct {
 	OriginalURL string `json:"url,omitempty"`
 	ShortURL    string `json:"result,omitempty"`
@@ -164,7 +144,7 @@ type URLLongAndShort struct {
 // PostFuncAPIShorten бработчик Post запросов для эндпоинта api/shorten/
 func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := HandParam("FILE_STORAGE_PATH", flStoragePth)
+		fileStoragePath := ResHandParam.FSP
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError != nil {
 			log.Println(openFileError)
@@ -184,7 +164,8 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 				recovery(handMapPost, handMapGet, storageFile)
 			}
 		}
-		baseURL := HandParam("BASE_URL", bsURL)
+
+		baseURL := ResHandParam.BU
 		urlStruct := URLLongAndShort{}
 		rawBsp, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -206,6 +187,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 
 			handMapPost[urlStruct.OriginalURL] = rndRes
 			handMapGet[rndRes] = urlStruct.OriginalURL
+
 			addToFile := urlStruct.OriginalURL + "@" + rndRes + "\n"
 			if fileStoragePath != "" {
 				_, err := storageFile.Write([]byte(addToFile))
@@ -213,6 +195,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 					log.Println(writeFileError)
 				}
 			}
+
 			urlStruct.OriginalURL = ""
 			urlStruct.ShortURL = baseURL + rndRes
 			shURLByteFormat, _ := json.Marshal(urlStruct)
@@ -228,8 +211,8 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 	}
 }
 
+// Функия востановления данных из файла
 func recovery(handMapPost map[string]string, handMapGet map[string]string, file *os.File) {
-
 	_, err := file.Seek(0, 0)
 	if err != nil {
 		log.Println(seekError)
@@ -247,6 +230,7 @@ func recovery(handMapPost map[string]string, handMapGet map[string]string, file 
 
 }
 
+// HandParam Функция обработки флагов
 func HandParam(name string, flg *string) string {
 	res := ""
 	globEnv := os.Getenv(name)
@@ -264,37 +248,8 @@ func HandParam(name string, flg *string) string {
 	return res
 }
 
-func decompress(data []byte, err0 error) ([]byte, error) {
-	if err0 != nil {
-		return nil, fmt.Errorf("error 0 %v", err0)
-	}
-
-	r, err1 := gzip.NewReader(bytes.NewReader(data))
-	if err1 != nil {
-		return data, nil
-	}
-	defer r.Close()
-
-	var b bytes.Buffer
-
-	_, err := b.ReadFrom(r)
-	if err != nil {
-		return data, nil
-	}
-
-	return b.Bytes(), nil
-}
-
-func compress(data []byte) ([]byte, error) {
-	var b bytes.Buffer
-	w := gzip.NewWriter(&b)
-	_, err := w.Write(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed write data to compress temporary buffer: %v", err)
-	}
-	err0 := w.Close()
-	if err0 != nil {
-		return nil, fmt.Errorf("%v", err0)
-	}
-	return b.Bytes(), nil
+// ResHandParam Структура для предобработки флагов и переменных
+var ResHandParam struct {
+	BU  string
+	FSP string
 }
