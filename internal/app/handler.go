@@ -75,51 +75,12 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 // PostFunc Обработчик Post запросов
 func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := ResHandParam.FSP
-		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-		if fileError != nil {
-			log.Println(openFileError)
-		}
-		defer func(storageFile *os.File) {
-			err := storageFile.Close()
-			if err != nil {
-				log.Println(closeFileError)
-			}
-		}(storageFile)
-		if fileStoragePath != "" {
-			count := 0
-			for range handMapPost {
-				count++
-			}
-			if count == 0 {
-				recovery(handMapPost, handMapGet, storageFile)
-			}
-		}
-
-		baseURL := ResHandParam.BU
 		bp, err := decompress(io.ReadAll(r.Body))
 		if err != nil {
 			log.Println(postBodyError)
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
-			rndRes := randSeq(6)
-			for {
-				if handMapGet[string(bp)] != "" {
-					rndRes = randSeq(6)
-				} else {
-					break
-				}
-			}
-			handMapPost[string(bp)] = rndRes
-			handMapGet[rndRes] = string(bp)
-			addToFile := string(bp) + "@" + rndRes + "\n"
-			if fileStoragePath != "" {
-				_, err2 := storageFile.Write([]byte(addToFile))
-				if err2 != nil {
-					log.Println(writeFileError)
-				}
-			}
-			resultPost := baseURL + rndRes
+			resultPost := shortPostFunc(handMapPost, handMapGet, bp)
 			bResultPost := []byte(resultPost)
 			if r.Header.Get("Content-Encoding ") == "gzip" {
 				bResultPost, err = compress([]byte(resultPost))
@@ -134,8 +95,52 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				http.Error(w, "Post request error", http.StatusBadRequest)
 
 			}
+
 		}
 	}
+}
+
+func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte) string {
+	fileStoragePath := ResHandParam.FSP
+	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
+	if fileError != nil {
+		log.Println(openFileError)
+	}
+	defer func(storageFile *os.File) {
+		err := storageFile.Close()
+		if err != nil {
+			log.Println(closeFileError)
+		}
+	}(storageFile)
+	if fileStoragePath != "" {
+		count := 0
+		for range handMapPost {
+			count++
+		}
+		if count == 0 {
+			recovery(handMapPost, handMapGet, storageFile)
+		}
+	}
+	baseURL := ResHandParam.BU
+	rndRes := randSeq(6)
+	for {
+		if handMapGet[string(bp)] != "" {
+			rndRes = randSeq(6)
+		} else {
+			break
+		}
+	}
+	handMapPost[string(bp)] = rndRes
+	handMapGet[rndRes] = string(bp)
+	addToFile := string(bp) + "@" + rndRes + "\n"
+	if fileStoragePath != "" {
+		_, err2 := storageFile.Write([]byte(addToFile))
+		if err2 != nil {
+			log.Println(writeFileError)
+		}
+	}
+	resultPost := baseURL + rndRes
+	return resultPost
 }
 
 // NotAllowedMethodFunc Обработчик для незаданных методов
@@ -156,71 +161,81 @@ type URLLongAndShort struct {
 // PostFuncAPIShorten бработчик Post запросов для эндпоинта api/shorten/
 func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fileStoragePath := ResHandParam.FSP
-		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-		if fileError != nil {
-			log.Println(openFileError)
-		}
-		defer func(storageFile *os.File) {
-			err := storageFile.Close()
-			if err != nil {
-				log.Println(closeFileError)
-			}
-		}(storageFile)
-		if fileStoragePath != "" {
-			count := 0
-			for range handMapPost {
-				count++
-			}
-			if count == 0 {
-				recovery(handMapPost, handMapGet, storageFile)
-			}
-		}
-
-		baseURL := ResHandParam.BU
-		urlStruct := URLLongAndShort{}
 		rawBsp, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Println(postBodyError)
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
-			if err := json.Unmarshal([]byte(rawBsp), &urlStruct); err != nil {
-				log.Println(postBodyError)
+			shURLByteFormat, err0 := shortPostFuncAPIShorten(handMapPost, handMapGet, rawBsp)
+			if err0 != nil {
 				w.WriteHeader(http.StatusBadRequest)
 			}
-			rndRes := randSeq(6)
-			for {
-				if handMapGet[rndRes] != "" {
-					rndRes = randSeq(6)
-				} else {
-					break
-				}
-			}
-
-			handMapPost[urlStruct.OriginalURL] = rndRes
-			handMapGet[rndRes] = urlStruct.OriginalURL
-
-			addToFile := urlStruct.OriginalURL + "@" + rndRes + "\n"
-			if fileStoragePath != "" {
-				_, err := storageFile.Write([]byte(addToFile))
-				if err != nil {
-					log.Println(writeFileError)
-				}
-			}
-
-			urlStruct.OriginalURL = ""
-			urlStruct.ShortURL = baseURL + rndRes
-			shURLByteFormat, _ := json.Marshal(urlStruct)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			_, err := w.Write(shURLByteFormat)
-			if err != nil {
+			_, err1 := w.Write(shURLByteFormat)
+			if err1 != nil {
 				http.Error(w, "Post request error", http.StatusBadRequest)
 			}
 
 		}
 
 	}
+}
+
+func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, rawBsp []byte) ([]byte, error) {
+	fileStoragePath := ResHandParam.FSP
+	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
+	if fileError != nil {
+		log.Println(openFileError)
+	}
+	defer func(storageFile *os.File) {
+		err := storageFile.Close()
+		if err != nil {
+			log.Println(closeFileError)
+		}
+	}(storageFile)
+	if fileStoragePath != "" {
+		count := 0
+		for range handMapPost {
+			count++
+		}
+		if count == 0 {
+			recovery(handMapPost, handMapGet, storageFile)
+		}
+	}
+
+	baseURL := ResHandParam.BU
+	urlStruct := URLLongAndShort{}
+	if err := json.Unmarshal([]byte(rawBsp), &urlStruct); err != nil {
+		log.Println(postBodyError)
+		return nil, err
+	}
+	rndRes := randSeq(6)
+	for {
+		if handMapGet[rndRes] != "" {
+			rndRes = randSeq(6)
+		} else {
+			break
+		}
+	}
+
+	handMapPost[urlStruct.OriginalURL] = rndRes
+	handMapGet[rndRes] = urlStruct.OriginalURL
+
+	addToFile := urlStruct.OriginalURL + "@" + rndRes + "\n"
+	if fileStoragePath != "" {
+		_, err := storageFile.Write([]byte(addToFile))
+		if err != nil {
+			log.Println(writeFileError)
+		}
+	}
+
+	urlStruct.OriginalURL = ""
+	urlStruct.ShortURL = baseURL + rndRes
+	shURLByteFormat, _ := json.Marshal(urlStruct)
+
+	return shURLByteFormat, nil
+
 }
 
 // Функия востановления данных из файла
