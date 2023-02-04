@@ -407,12 +407,15 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 		} else {
 			cckValue = cck.Value
 		}
+		log.Println(cckValue)
 		bm := make(map[string]string)
 		for k, v := range handMapGet {
-			if k[4:] == cckValue {
+			log.Println(k[6:], v)
+			if k[6:] == cckValue {
 				bm[k] = v
 			}
 		}
+		log.Println(len(bm))
 		if len(bm) == 0 {
 			w.WriteHeader(http.StatusNoContent)
 		} else {
