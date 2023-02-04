@@ -88,10 +88,10 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 			cck, errCck := r.Cookie("userId")
 			cckValue := ""
 			if errCck != nil {
-				cChVar := coockieCheck(w, r)
+				cChVar := makeNewCoockie(w)
 				cckValue = cChVar
 			} else {
-				cckValue = cck.Value
+				cckValue = coockieCheck(w, cck.Value)
 			}
 			log.Println("cckValue in PostFunc:", cckValue)
 			resultPost := shortPostFunc(handMapPost, handMapGet, bp, cckValue)
@@ -344,25 +344,20 @@ type idKey struct {
 var resIdKey = map[string]idKey{"0": {"0", "0"}}
 
 // Функция проверки наличия и подписи куки
-func coockieCheck(w http.ResponseWriter, r *http.Request) string {
-	cck, err := r.Cookie("userId")
-	if err != nil {
-		log.Println("Error1 Coockie check", err)
+func coockieCheck(w http.ResponseWriter, cckValue string) string {
+
+	rik := resIdKey[cckValue]
+	id := []byte(rik.id)
+	key := []byte(rik.key)
+	h := hmac.New(sha256.New, key)
+	h.Write(id)
+	sgnIdKey := h.Sum(nil)
+	if hex.EncodeToString(sgnIdKey) != cckValue {
 		resCCh := makeNewCoockie(w)
 		return resCCh
-	} else {
-		rik := resIdKey[cck.Value]
-		id := []byte(rik.id)
-		key := []byte(rik.key)
-		h := hmac.New(sha256.New, key)
-		h.Write(id)
-		sgnIdKey := h.Sum(nil)
-		if hex.EncodeToString(sgnIdKey) != cck.Value {
-			resCCh := makeNewCoockie(w)
-			return resCCh
-		}
 	}
-	return cck.Value
+
+	return cckValue
 }
 
 // Функция для создания новых куки при провале проверки
@@ -397,10 +392,10 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 		cck, err := r.Cookie("userId")
 		cckValue := ""
 		if err != nil {
-			cChvar := coockieCheck(w, r)
+			cChvar := makeNewCoockie(w)
 			cckValue = cChvar
 		} else {
-			cckValue = cck.Value
+			cckValue = coockieCheck(w, cck.Value)
 		}
 		log.Println("cChVar in GetApiFunc:", cckValue)
 		bm := make(map[string]string)
@@ -414,7 +409,7 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 		if len(bm) == 0 {
 			w.WriteHeader(http.StatusNoContent)
 		} else {
-			var mass string
+			var mass []string
 			for k, _ := range bm {
 				buff1 := &OrShUrl{
 					ShortUrl:    k,
@@ -422,7 +417,7 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 				}
 
 				buff2, _ := json.Marshal(buff1)
-				mass += string(buff2)
+				mass = append(mass, string(buff2))
 			}
 			buff3, _ := json.Marshal(mass)
 			w.Header().Set("Content-Type", "application/json")
