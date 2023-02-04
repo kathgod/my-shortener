@@ -89,7 +89,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 		} else {
 			cck, errCck := r.Cookie("userID")
 			cckValue := ""
-			log.Println(cChVar)
+			log.Println("cChvar in PostFunc:", cChVar)
 			if errCck != nil {
 				cckValue = cChVar
 			} else {
@@ -347,10 +347,10 @@ var resIdKey = map[string]idKey{"0": {"0", "0"}}
 
 // Функция проверки наличия и подписи куки
 func coockieCheck(w http.ResponseWriter, r *http.Request) string {
-	cck, err := r.Cookie("id")
+	cck, err := r.Cookie("userId")
 	if err != nil {
 		log.Println("Error1 Coockie check", err)
-		resCCh := makeNewCoockie(w, cck)
+		resCCh := makeNewCoockie(w)
 		return resCCh
 	} else {
 		rik := resIdKey[cck.Value]
@@ -360,7 +360,7 @@ func coockieCheck(w http.ResponseWriter, r *http.Request) string {
 		h.Write(id)
 		sgnIdKey := h.Sum(nil)
 		if hex.EncodeToString(sgnIdKey) != cck.Value {
-			resCCh := makeNewCoockie(w, cck)
+			resCCh := makeNewCoockie(w)
 			return resCCh
 		}
 	}
@@ -368,7 +368,7 @@ func coockieCheck(w http.ResponseWriter, r *http.Request) string {
 }
 
 // Функция для создания новых куки при провале проверки
-func makeNewCoockie(w http.ResponseWriter, cck *http.Cookie) string {
+func makeNewCoockie(w http.ResponseWriter) string {
 	id := make([]byte, 16)
 	key := make([]byte, 16)
 	_, err1 := cr.Read(id)
@@ -380,8 +380,8 @@ func makeNewCoockie(w http.ResponseWriter, cck *http.Cookie) string {
 	h := hmac.New(sha256.New, key)
 	h.Write(id)
 	sgnIdKey := h.Sum(nil)
-	cck = &http.Cookie{
-		Name:  "id",
+	cck := &http.Cookie{
+		Name:  "userId",
 		Value: hex.EncodeToString(sgnIdKey),
 	}
 	http.SetCookie(w, cck)
@@ -407,7 +407,7 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 		} else {
 			cckValue = cck.Value
 		}
-		log.Println(cckValue)
+		log.Println("cChVar in GetApiFunc:", cckValue)
 		bm := make(map[string]string)
 		for k, v := range handMapGet {
 			log.Println(k[6:], v)
