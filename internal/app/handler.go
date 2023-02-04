@@ -7,6 +7,7 @@ import (
 	"crypto/hmac"
 	cr "crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -80,14 +81,21 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 // PostFunc Обработчик Post запросов
 func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		coockieCheck(w, r)
+		cChVar := coockieCheck(w, r)
 		bp, err := decompress(io.ReadAll(r.Body))
 		if err != nil {
 			log.Println(postBodyError)
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
-			cck, _ := r.Cookie("userID")
-			resultPost := shortPostFunc(handMapPost, handMapGet, bp, cck.Value)
+			cck, errCck := r.Cookie("userID")
+			cckValue := ""
+			log.Println(cChVar)
+			if errCck != nil {
+				cckValue = cChVar
+			} else {
+				cckValue = cck.Value
+			}
+			resultPost := shortPostFunc(handMapPost, handMapGet, bp, cckValue)
 			bResultPost := []byte(resultPost)
 			if r.Header.Get("Content-Encoding ") == "gzip" {
 				bResultPost, err = compress([]byte(resultPost))
@@ -338,10 +346,12 @@ type idKey struct {
 var resIdKey = map[string]idKey{"0": {"0", "0"}}
 
 // Функция проверки наличия и подписи куки
-func coockieCheck(w http.ResponseWriter, r *http.Request) {
-	cck, err := r.Cookie("userID")
+func coockieCheck(w http.ResponseWriter, r *http.Request) string {
+	cck, err := r.Cookie("id")
 	if err != nil {
-		makeNewCoockie(w, cck)
+		log.Println("Error1 Coockie check", err)
+		resCCh := makeNewCoockie(w, cck)
+		return resCCh
 	} else {
 		rik := resIdKey[cck.Value]
 		id := []byte(rik.id)
@@ -349,18 +359,21 @@ func coockieCheck(w http.ResponseWriter, r *http.Request) {
 		h := hmac.New(sha256.New, key)
 		h.Write(id)
 		sgnIdKey := h.Sum(nil)
-		if string(sgnIdKey) != cck.Value {
-			makeNewCoockie(w, cck)
+		if hex.EncodeToString(sgnIdKey) != cck.Value {
+			resCCh := makeNewCoockie(w, cck)
+			return resCCh
 		}
 	}
+	return cck.Value
 }
 
 // Функция для создания новых куки при провале проверки
-func makeNewCoockie(w http.ResponseWriter, cck *http.Cookie) {
+func makeNewCoockie(w http.ResponseWriter, cck *http.Cookie) string {
 	id := make([]byte, 16)
 	key := make([]byte, 16)
 	_, err1 := cr.Read(id)
 	_, err2 := cr.Read(key)
+
 	if err1 != nil || err2 != nil {
 		log.Println(coockieByteReadError)
 	}
@@ -368,11 +381,12 @@ func makeNewCoockie(w http.ResponseWriter, cck *http.Cookie) {
 	h.Write(id)
 	sgnIdKey := h.Sum(nil)
 	cck = &http.Cookie{
-		Name:  "userID",
-		Value: string(sgnIdKey),
+		Name:  "id",
+		Value: hex.EncodeToString(sgnIdKey),
 	}
 	http.SetCookie(w, cck)
-	resIdKey[string(sgnIdKey)] = idKey{string(id), string(key)}
+	resIdKey[hex.EncodeToString(sgnIdKey)] = idKey{hex.EncodeToString(id), hex.EncodeToString(key)}
+	return hex.EncodeToString(sgnIdKey)
 }
 
 type ShUrl struct {
