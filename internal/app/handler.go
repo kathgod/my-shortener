@@ -44,7 +44,6 @@ func randSeq(n int) string {
 // GetFunc Обработчик для Get запросов
 func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		coockieCheck(w, r)
 		fileStoragePath := ResHandParam.FSP
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError != nil {
@@ -81,20 +80,20 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 // PostFunc Обработчик Post запросов
 func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cChVar := coockieCheck(w, r)
 		bp, err := decompress(io.ReadAll(r.Body))
 		if err != nil {
 			log.Println(postBodyError)
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
-			cck, errCck := r.Cookie("userID")
+			cck, errCck := r.Cookie("userId")
 			cckValue := ""
-			log.Println("cChvar in PostFunc:", cChVar)
 			if errCck != nil {
+				cChVar := coockieCheck(w, r)
 				cckValue = cChVar
 			} else {
 				cckValue = cck.Value
 			}
+			log.Println("cckValue in PostFunc:", cckValue)
 			resultPost := shortPostFunc(handMapPost, handMapGet, bp, cckValue)
 			bResultPost := []byte(resultPost)
 			if r.Header.Get("Content-Encoding ") == "gzip" {
@@ -177,7 +176,6 @@ type URLLongAndShort struct {
 // PostFuncAPIShorten бработчик Post запросов для эндпоинта api/shorten/
 func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		coockieCheck(w, r)
 		rawBsp, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Println(postBodyError)
@@ -399,10 +397,10 @@ type OrUrl struct {
 
 func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cChvar := coockieCheck(w, r)
-		cck, err := r.Cookie("userID")
+		cck, err := r.Cookie("userId")
 		cckValue := ""
 		if err != nil {
+			cChvar := coockieCheck(w, r)
 			cckValue = cChvar
 		} else {
 			cckValue = cck.Value
