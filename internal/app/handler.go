@@ -399,11 +399,17 @@ type OrUrl struct {
 
 func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		coockieCheck(w, r)
-		cck, _ := r.Cookie("userID")
+		cChvar := coockieCheck(w, r)
+		cck, err := r.Cookie("userID")
+		cckValue := ""
+		if err != nil {
+			cckValue = cChvar
+		} else {
+			cckValue = cck.Value
+		}
 		bm := make(map[string]string)
 		for k, v := range handMapGet {
-			if k[4:] == cck.Value {
+			if k[4:] == cckValue {
 				bm[k] = v
 			}
 		}
