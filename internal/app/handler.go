@@ -437,8 +437,9 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 			}
 			mass = mass + "]"
 			buff7, _ := json.Marshal(mass)
-			w.Header().Set("Content-Type", "application/json")
 			w.Write(buff7)
+			w.Header().Set("Content-Type", "application/json")
+
 		}
 	}
 }
