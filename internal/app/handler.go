@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	cr "crypto/rand"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,13 +19,14 @@ import (
 
 // Константы ошибок
 const (
-	postBodyError       = "Bad Post request body"
-	notAllowMethodError = "Not Allow method Error "
-	closeFileError      = "Close File Error"
-	writeFileError      = "Write into the File"
-	seekError           = "Seek Error"
-	openFileError       = "Open File Error"
-	compressError       = "Compress file"
+	postBodyError        = "Bad Post request body"
+	notAllowMethodError  = "Not Allow method Error "
+	closeFileError       = "Close File Error"
+	writeFileError       = "Write into the File"
+	seekError            = "Seek Error"
+	openFileError        = "Open File Error"
+	compressError        = "Compress file"
+	coockieByteReadError = "Coockie Byte Read Error"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -39,6 +43,7 @@ func randSeq(n int) string {
 // GetFunc Обработчик для Get запросов
 func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		coockieCheck(w, r)
 		fileStoragePath := ResHandParam.FSP
 		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 		if fileError != nil {
@@ -75,12 +80,14 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 // PostFunc Обработчик Post запросов
 func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		coockieCheck(w, r)
 		bp, err := decompress(io.ReadAll(r.Body))
 		if err != nil {
 			log.Println(postBodyError)
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
-			resultPost := shortPostFunc(handMapPost, handMapGet, bp)
+			cck, _ := r.Cookie("userID")
+			resultPost := shortPostFunc(handMapPost, handMapGet, bp, cck.Value)
 			bResultPost := []byte(resultPost)
 			if r.Header.Get("Content-Encoding ") == "gzip" {
 				bResultPost, err = compress([]byte(resultPost))
@@ -100,7 +107,8 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 	}
 }
 
-func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte) string {
+// Функуция сокращения URL для PostFunc
+func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) string {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
@@ -122,10 +130,10 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 		}
 	}
 	baseURL := ResHandParam.BU
-	rndRes := randSeq(6)
+	rndRes := randSeq(6) + cckValue
 	for {
 		if handMapGet[string(bp)] != "" {
-			rndRes = randSeq(6)
+			rndRes = randSeq(6) + cckValue
 		} else {
 			break
 		}
@@ -161,6 +169,7 @@ type URLLongAndShort struct {
 // PostFuncAPIShorten бработчик Post запросов для эндпоинта api/shorten/
 func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		coockieCheck(w, r)
 		rawBsp, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Println(postBodyError)
@@ -182,6 +191,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 	}
 }
 
+// Функция сокращения URL для PostFuncAPIShorten
 func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, rawBsp []byte) ([]byte, error) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
@@ -316,4 +326,98 @@ func compress(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("%v", err0)
 	}
 	return b.Bytes(), nil
+}
+
+// Структура для мапы сохранений куки
+type idKey struct {
+	id  string
+	key string
+}
+
+// Мапа для сохранения куки
+var resIdKey = map[string]idKey{"0": {"0", "0"}}
+
+// Функция проверки наличия и подписи куки
+func coockieCheck(w http.ResponseWriter, r *http.Request) {
+	cck, err := r.Cookie("userID")
+	if err != nil {
+		makeNewCoockie(w, cck)
+	} else {
+		rik := resIdKey[cck.Value]
+		id := []byte(rik.id)
+		key := []byte(rik.key)
+		h := hmac.New(sha256.New, key)
+		h.Write(id)
+		sgnIdKey := h.Sum(nil)
+		if string(sgnIdKey) != cck.Value {
+			makeNewCoockie(w, cck)
+		}
+	}
+}
+
+// Функция для создания новых куки при провале проверки
+func makeNewCoockie(w http.ResponseWriter, cck *http.Cookie) {
+	id := make([]byte, 16)
+	key := make([]byte, 16)
+	_, err1 := cr.Read(id)
+	_, err2 := cr.Read(key)
+	if err1 != nil || err2 != nil {
+		log.Println(coockieByteReadError)
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	h := hmac.New(sha256.New, key)
+	h.Write(id)
+	sgnIdKey := h.Sum(nil)
+	cck = &http.Cookie{
+		Name:  "userID",
+		Value: string(sgnIdKey),
+	}
+	http.SetCookie(w, cck)
+	resIdKey[string(sgnIdKey)] = idKey{string(id), string(key)}
+}
+
+type ShUrl struct {
+	ShortUrl string `json:"short_url"`
+}
+
+type OrUrl struct {
+	OriginalUrl string `json:"original_url"`
+}
+
+func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		coockieCheck(w, r)
+		cck, _ := r.Cookie("userID")
+		bm := make(map[string]string)
+		for k, v := range handMapGet {
+			if k[4:] == cck.Value {
+				bm[k] = v
+			}
+		}
+		if len(bm) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			var mass string = "[\n"
+			for k, _ := range bm {
+				mass = mass + "\t{\n\t"
+				buff1 := &ShUrl{
+					ShortUrl: k,
+				}
+				buff2 := &OrUrl{
+					OriginalUrl: bm[k],
+				}
+				buff3, _ := json.Marshal(buff1)
+				buff4, _ := json.Marshal(buff2)
+
+				buff5 := strings.Replace(strings.Replace(string(buff3), "{", "", -1), "}", "", -1)
+				buff6 := strings.Replace(strings.Replace(string(buff4), "{", "", -1), "}", "", -1)
+
+				mass = mass + "\t" + string(buff5) + ",\n\t"
+				mass = mass + "\t" + string(buff6) + "\n\t"
+				mass = mass + "},\n"
+			}
+			mass = mass + "]"
+			w.Write([]byte(mass))
+		}
+	}
 }

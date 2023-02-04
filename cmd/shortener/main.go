@@ -38,6 +38,7 @@ func main() {
 	resG := MyHandler.GetFunc(mapPost, mapGet)
 	resNam := MyHandler.NotAllowedMethodFunc()
 	resPAS := MyHandler.PostFuncAPIShorten(mapPost, mapGet)
+	resGAUU := MyHandler.GetFuncApiUserUrls(mapPost, mapGet)
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -46,6 +47,7 @@ func main() {
 	rtr.Post("/", resP)
 	rtr.Post("/api/shorten", resPAS)
 	rtr.MethodNotAllowed(resNam)
+	rtr.Get("/api/user/urls", resGAUU)
 
 	err2 := http.ListenAndServe(portNumber, rtr)
 	if err2 != nil {
