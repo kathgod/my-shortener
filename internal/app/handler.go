@@ -363,7 +363,6 @@ func makeNewCoockie(w http.ResponseWriter, cck *http.Cookie) {
 	_, err2 := cr.Read(key)
 	if err1 != nil || err2 != nil {
 		log.Println(coockieByteReadError)
-		w.WriteHeader(http.StatusBadRequest)
 	}
 	h := hmac.New(sha256.New, key)
 	h.Write(id)
