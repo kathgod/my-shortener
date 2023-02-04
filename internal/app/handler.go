@@ -387,11 +387,8 @@ func makeNewCoockie(w http.ResponseWriter) string {
 	return hex.EncodeToString(sgnIdKey)
 }
 
-type ShUrl struct {
-	ShortUrl string `json:"short_url"`
-}
-
-type OrUrl struct {
+type OrShUrl struct {
+	ShortUrl    string `json:"short_url"`
 	OriginalUrl string `json:"original_url"`
 }
 
@@ -417,29 +414,19 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 		if len(bm) == 0 {
 			w.WriteHeader(http.StatusNoContent)
 		} else {
-			var mass string = "[\n"
+			var mass string
 			for k, _ := range bm {
-				mass = mass + "\t{\n\t"
-				buff1 := &ShUrl{
-					ShortUrl: k,
-				}
-				buff2 := &OrUrl{
+				buff1 := &OrShUrl{
+					ShortUrl:    k,
 					OriginalUrl: bm[k],
 				}
-				buff3, _ := json.Marshal(buff1)
-				buff4, _ := json.Marshal(buff2)
 
-				buff5 := strings.Replace(strings.Replace(string(buff3), "{", "", -1), "}", "", -1)
-				buff6 := strings.Replace(strings.Replace(string(buff4), "{", "", -1), "}", "", -1)
-
-				mass = mass + "\t" + string(buff5) + ",\n\t"
-				mass = mass + "\t" + string(buff6) + "\n\t"
-				mass = mass + "},\n"
+				buff2, _ := json.Marshal(buff1)
+				mass += string(buff2)
 			}
-			mass = mass + "]"
-			buff7, _ := json.Marshal(mass)
+			buff3, _ := json.Marshal(mass)
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(buff7)
+			w.Write(buff3)
 
 		}
 	}
