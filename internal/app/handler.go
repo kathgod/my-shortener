@@ -426,7 +426,7 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 				buff4 = bytes.Join(buff3, []byte(""))
 
 			}
-			filnalbuff := buff4
+			filnalbuff := buff4[1:]
 
 			log.Println(string(filnalbuff))
 
