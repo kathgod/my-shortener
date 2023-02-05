@@ -423,10 +423,10 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 
 				buff2, _ := json.Marshal(buff1)
 				buff3 := [][]byte{buff4, buff2}
-				buff4 = bytes.Join(buff3, []byte(",\n"))
+				buff4 = bytes.Join(buff3, []byte(""))
 
 			}
-			filnalbuff := buff4[2:]
+			filnalbuff := buff4
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(filnalbuff)
 
