@@ -427,6 +427,9 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 
 			}
 			filnalbuff := buff4
+
+			log.Println(string(filnalbuff))
+
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(filnalbuff)
 
