@@ -414,19 +414,19 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 		if len(bm) == 0 {
 			w.WriteHeader(http.StatusNoContent)
 		} else {
-			var buff4 []byte
+			var buff2 []byte
 			for k, _ := range bm {
 				buff1 := &OrShUrl{
 					ShortUrl:    k,
 					OriginalUrl: bm[k],
 				}
 
-				buff2, _ := json.Marshal(buff1)
-				buff3 := [][]byte{buff4, buff2}
-				buff4 = bytes.Join(buff3, []byte(""))
+				buff2, _ = json.Marshal(buff1)
+				//buff3 := [][]byte{buff4, buff2}
+				//buff4 = bytes.Join(buff3, []byte(""))
 
 			}
-			filnalbuff := buff4[1:]
+			filnalbuff := buff2
 
 			log.Println(string(filnalbuff))
 
