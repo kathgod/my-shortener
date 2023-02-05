@@ -426,12 +426,11 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 				//buff4 = bytes.Join(buff3, []byte(""))
 
 			}
-			filnalbuff := buff2
 
-			log.Println(string(filnalbuff))
+			log.Println(string(buff2))
 
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(filnalbuff)
+			w.Write(buff2)
 
 		}
 	}
