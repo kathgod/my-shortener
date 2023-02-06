@@ -28,6 +28,7 @@ const (
 	openFileError        = "Open File Error"
 	compressError        = "Compress file"
 	coockieByteReadError = "Coockie Byte Read Error"
+	base_url             = "http://localhost:8080"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -414,23 +415,21 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 		if len(bm) == 0 {
 			w.WriteHeader(http.StatusNoContent)
 		} else {
-			var buff2 []byte
+			var buff1 OrShUrl
+			buff2 := make([]OrShUrl, len(bm))
+			i := 0
 			for k, _ := range bm {
-				buff1 := &OrShUrl{
-					ShortUrl:    k,
-					OriginalUrl: bm[k],
-				}
 
-				buff2, _ = json.Marshal(buff1)
-				//buff3 := [][]byte{buff4, buff2}
-				//buff4 = bytes.Join(buff3, []byte(""))
+				buff1 = OrShUrl{ShortUrl: k, OriginalUrl: base_url + bm[k]}
+				buff2[i] = buff1
+				i++
 
 			}
-
-			log.Println(string(buff2))
+			buff3, _ := json.Marshal(buff2)
+			fmt.Println(string(buff3))
 
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(buff2)
+			w.Write(buff3)
 
 		}
 	}
