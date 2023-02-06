@@ -420,7 +420,7 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 			i := 0
 			for k, _ := range bm {
 
-				buff1 = OrShUrl{ShortUrl: k, OriginalUrl: base_url + bm[k]}
+				buff1 = OrShUrl{ShortUrl: base_url + k, OriginalUrl: bm[k]}
 				buff2[i] = buff1
 				i++
 
