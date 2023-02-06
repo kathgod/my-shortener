@@ -28,7 +28,7 @@ const (
 	openFileError        = "Open File Error"
 	compressError        = "Compress file"
 	coockieByteReadError = "Coockie Byte Read Error"
-	base_url             = "http://localhost:8080"
+	base_url             = "http://localhost:8080/"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
