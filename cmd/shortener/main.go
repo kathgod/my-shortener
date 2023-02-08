@@ -38,7 +38,6 @@ func main() {
 	MyHandler.ResHandParam.BU = MyHandler.HandParam("BASE_URL", bsURL)
 	MyHandler.ResHandParam.FSP = MyHandler.HandParam("FILE_STORAGE_PATH", flStoragePth)
 	MyHandler.ResHandParam.DBD = MyHandler.HandParam("DATABASE_DSN", datadbaseDsn)
-	log.Println(MyHandler.ResHandParam.DBD)
 
 	mapPost := make(map[string]string)
 	mapGet := make(map[string]string)
@@ -59,8 +58,7 @@ func main() {
 	rtr.Get("/api/user/urls", resGAUU)
 
 	if MyHandler.ResHandParam.DBD != "" {
-		log.Println("In main", MyHandler.ResHandParam.DBD)
-		db, errDB := sql.Open("posgres", MyHandler.ResHandParam.DBD)
+		db, errDB := sql.Open("postgres", MyHandler.ResHandParam.DBD)
 		defer db.Close()
 		if errDB != nil {
 			log.Println(dbOpenError)
