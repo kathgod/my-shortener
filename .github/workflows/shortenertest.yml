@@ -59,6 +59,7 @@ jobs:
         run: |
           cd cmd/shortener
           go build -buildvcs=false -o shortener
+          go mod download github.com/caarlos0/env/v6
 
       - name: "Code increment #1"
         if: |
