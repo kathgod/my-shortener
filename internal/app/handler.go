@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/hmac"
 	cr "crypto/rand"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -288,6 +290,7 @@ func HandParam(name string, flg *string) string {
 	case "BASE_URL":
 		res = res + "/"
 	case "FILE_STORAGE_PATH":
+	case "DATABASE_DSN":
 	}
 	return res
 }
@@ -296,6 +299,7 @@ func HandParam(name string, flg *string) string {
 var ResHandParam struct {
 	BU  string
 	FSP string
+	DBD string
 }
 
 // Функция декомпресии тела запроса
@@ -388,11 +392,13 @@ func makeNewCoockie(w http.ResponseWriter) string {
 	return hex.EncodeToString(sgnIdKey)
 }
 
+// OrShUrl Структура для Json массива, необходимого для вывода по запросу GetFuncApiUserUrls
 type OrShUrl struct {
 	ShortUrl    string `json:"short_url"`
 	OriginalUrl string `json:"original_url"`
 }
 
+// GetFuncApiUserUrls функция возвращает объект json-array, со всеми длинными и короткими URL которые создал юзер
 func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cck, err := r.Cookie("userId")
@@ -431,6 +437,18 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(buff3)
 
+		}
+	}
+}
+
+func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		if err := db.PingContext(ctx); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusOK)
 		}
 	}
 }
