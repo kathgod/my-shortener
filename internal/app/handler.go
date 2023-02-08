@@ -441,6 +441,7 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 	}
 }
 
+// GetFuncPing Функция пинга базы данных
 func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithCancel(context.Background())
