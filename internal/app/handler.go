@@ -32,6 +32,10 @@ const (
 	compressError        = "Compress file"
 	coockieByteReadError = "Coockie Byte Read Error"
 	base_url             = "http://localhost:8080/"
+	errorCreatingTable   = "Error when creating table"
+	errorPrepareContext  = "Prepare context Error"
+	errInsert            = "Error when inserting row into table"
+	findingRowAffected   = "Error when finding rows affected"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -159,6 +163,10 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 		}
 	}
 	resultPost := baseURL + rndRes
+
+	if ResHandParam.DBD != "" {
+		AddRecordInTable(ResCreateSQLTable, resultPost, string(bp), cckValue)
+	}
 	return resultPost
 }
 
@@ -250,8 +258,11 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 		}
 	}
 
-	urlStruct.OriginalURL = ""
 	urlStruct.ShortURL = baseURL + rndRes
+	if ResHandParam.DBD != "" {
+		AddRecordInTable(ResCreateSQLTable, urlStruct.ShortURL, urlStruct.OriginalURL, "default")
+	}
+	urlStruct.OriginalURL = ""
 	shURLByteFormat, _ := json.Marshal(urlStruct)
 
 	return shURLByteFormat, nil
@@ -454,4 +465,40 @@ func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		}
 	}
+}
+
+// CreateSQLTable Функция создания SQL таблиц
+func CreateSQLTable(db *sql.DB) *sql.DB {
+	tableSQLcmd := `CREATE TABLE IF NOT EXIST idshortlongurl(shorturl text longurl text userid text)`
+	ctx, cancelfunc := context.WithCancel(context.Background())
+	defer cancelfunc()
+	_, err := db.ExecContext(ctx, tableSQLcmd)
+	if err != nil {
+		log.Printf(errorCreatingTable)
+		return nil
+	}
+	return db
+}
+
+var ResCreateSQLTable *sql.DB
+
+// Функция записи в SQL таблицу
+func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string) {
+	query := "INSERT INTO idshortlongurl(shorturl longurl userid text) VALUES (?, ?, ?)"
+	ctx, cancelfunc := context.WithCancel(context.Background())
+	defer cancelfunc()
+	stmt, err0 := db.PrepareContext(ctx, query)
+	if err0 != nil {
+		log.Println(errorPrepareContext)
+	}
+	defer stmt.Close()
+	res, err1 := stmt.ExecContext(ctx, shortUrl, longUrl, userId)
+	if err1 != nil {
+		log.Println(errInsert)
+	}
+	rows, err2 := res.RowsAffected()
+	if err2 != nil {
+		log.Printf(findingRowAffected)
+	}
+	log.Printf("%d rows created ", rows)
 }

@@ -65,6 +65,7 @@ func main() {
 		}
 		resGP := MyHandler.GetFuncPing(db)
 		rtr.Get("/ping", resGP)
+		MyHandler.ResCreateSQLTable = MyHandler.CreateSQLTable(db)
 	}
 
 	err2 := http.ListenAndServe(portNumber, rtr)
