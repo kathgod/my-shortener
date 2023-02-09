@@ -470,9 +470,9 @@ func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 // CreateSQLTable Функция создания SQL таблиц
 func CreateSQLTable(db *sql.DB) *sql.DB {
 	tableSQLcmd := `CREATE TABLE IF NOT EXIST idshortlongurl(shorturl text, longurl text, userid text)`
-	ctx, cancelfunc := context.WithCancel(context.Background())
-	defer cancelfunc()
-	res, err := db.ExecContext(ctx, tableSQLcmd)
+	//ctx, cancelfunc := context.WithCancel(context.Background())
+	//defer cancelfunc()
+	res, err := db.ExecContext(context.Background(), tableSQLcmd)
 	if err != nil {
 		log.Printf(errorCreatingTable)
 		return nil
