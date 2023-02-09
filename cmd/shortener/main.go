@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"reflect"
 	"time"
 	MyHandler "urlshortener/internal/app"
 )
@@ -57,6 +58,7 @@ func main() {
 
 	if MyHandler.ResHandParam.DBD != "" {
 		MyHandler.ResCreateSQLTable = MyHandler.CreateSQLTable()
+		log.Println(reflect.TypeOf(MyHandler.ResCreateSQLTable))
 		resGP := MyHandler.GetFuncPing(MyHandler.ResCreateSQLTable)
 		rtr.Get("/ping", resGP)
 	}
