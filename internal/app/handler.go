@@ -37,7 +37,6 @@ const (
 	errorPrepareContext  = "Prepare context Error"
 	errInsert            = "Error when inserting row into table"
 	findingRowAffected   = "Error when finding rows affected"
-	dbOpenError          = "Open DataBase Error"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -470,12 +469,8 @@ func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateSQLTable Функция создания SQL таблиц
-func CreateSQLTable() *sql.DB {
-	db, errDB := sql.Open("postgres", ResHandParam.DBD)
-	defer db.Close()
-	if errDB != nil {
-		log.Println(dbOpenError)
-	}
+func CreateSQLTable(db *sql.DB) *sql.DB {
+
 	query := `CREATE TABLE idshortlongurl(shorturl text, longurl text, userid text)`
 	ctx, cancelfunc := context.WithCancel(context.Background())
 	defer cancelfunc()
