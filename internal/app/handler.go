@@ -470,13 +470,13 @@ func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 
 // CreateSQLTable Функция создания SQL таблиц
 func CreateSQLTable(db *sql.DB) *sql.DB {
-
 	query := `CREATE TABLE idshortlongurl(shorturl text, longurl text, userid text)`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
 	res, err := db.ExecContext(ctx, query)
 	if err != nil {
 		log.Printf(errorCreatingTable)
+		log.Println(err)
 		return nil
 	}
 	rows, err2 := res.RowsAffected()
