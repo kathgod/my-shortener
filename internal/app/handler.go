@@ -496,6 +496,7 @@ func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string
 	stmt, err0 := db.PrepareContext(ctx, query)
 	if err0 != nil {
 		log.Println(errorPrepareContext)
+		log.Println(err0)
 	}
 	defer stmt.Close()
 	res, err1 := stmt.ExecContext(ctx, shortUrl, longUrl, userId)
