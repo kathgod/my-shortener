@@ -64,10 +64,11 @@ func main() {
 		if errDB != nil {
 			log.Println(dbOpenError)
 		}
+		resGP := MyHandler.GetFuncPing(db)
+		rtr.Get("/ping", resGP)
+
 		MyHandler.ResCreateSQLTable = MyHandler.CreateSQLTable(db)
 		log.Println(reflect.TypeOf(MyHandler.ResCreateSQLTable))
-		resGP := MyHandler.GetFuncPing(MyHandler.ResCreateSQLTable)
-		rtr.Get("/ping", resGP)
 	}
 
 	err2 := http.ListenAndServe(portNumber, rtr)
