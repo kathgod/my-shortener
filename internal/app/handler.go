@@ -490,7 +490,7 @@ var ResCreateSQLTable *sql.DB
 
 // Функция записи в SQL таблицу
 func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string) {
-	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES (?, ?, ?)`
+	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES ($1, $2, $3)`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
 	stmt, err0 := db.PrepareContext(ctx, query)
