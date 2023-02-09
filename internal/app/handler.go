@@ -477,7 +477,6 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 	if err != nil {
 		log.Printf(errorCreatingTable)
 		log.Println(err)
-		return nil
 	}
 	rows, err2 := res.RowsAffected()
 	if err2 != nil {
