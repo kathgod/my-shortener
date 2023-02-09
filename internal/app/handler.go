@@ -472,11 +472,16 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 	tableSQLcmd := `CREATE TABLE IF NOT EXIST idshortlongurl(shorturl text, longurl text, userid text)`
 	ctx, cancelfunc := context.WithCancel(context.Background())
 	defer cancelfunc()
-	_, err := db.ExecContext(ctx, tableSQLcmd)
+	res, err := db.ExecContext(ctx, tableSQLcmd)
 	if err != nil {
 		log.Printf(errorCreatingTable)
 		return nil
 	}
+	rows, err2 := res.RowsAffected()
+	if err2 != nil {
+		log.Printf(findingRowAffected)
+	}
+	log.Printf("%d rows created ", rows)
 	return db
 }
 
@@ -484,7 +489,7 @@ var ResCreateSQLTable *sql.DB
 
 // Функция записи в SQL таблицу
 func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string) {
-	query := "INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES (?, ?, ?)"
+	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES (?, ?, ?)`
 	ctx, cancelfunc := context.WithCancel(context.Background())
 	defer cancelfunc()
 	stmt, err0 := db.PrepareContext(ctx, query)
