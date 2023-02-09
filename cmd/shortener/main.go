@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/lib/pq"
@@ -13,8 +12,7 @@ import (
 )
 
 const (
-	srError     = "Server Error"
-	dbOpenError = "Open DataBase Error"
+	srError = "Server Error"
 )
 
 var (
@@ -58,14 +56,9 @@ func main() {
 	rtr.Get("/api/user/urls", resGAUU)
 
 	if MyHandler.ResHandParam.DBD != "" {
-		db, errDB := sql.Open("postgres", MyHandler.ResHandParam.DBD)
-		defer db.Close()
-		if errDB != nil {
-			log.Println(dbOpenError)
-		}
-		resGP := MyHandler.GetFuncPing(db)
+		MyHandler.ResCreateSQLTable = MyHandler.CreateSQLTable()
+		resGP := MyHandler.GetFuncPing(MyHandler.ResCreateSQLTable)
 		rtr.Get("/ping", resGP)
-		MyHandler.ResCreateSQLTable = MyHandler.CreateSQLTable(db)
 	}
 
 	err2 := http.ListenAndServe(portNumber, rtr)
