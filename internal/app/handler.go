@@ -472,7 +472,7 @@ func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 func CreateSQLTable(db *sql.DB) *sql.DB {
 
 	query := `CREATE TABLE idshortlongurl(shorturl text, longurl text, userid text)`
-	ctx, cancelfunc := context.WithCancel(context.Background())
+	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
 	res, err := db.ExecContext(ctx, query)
 	if err != nil {
@@ -492,7 +492,7 @@ var ResCreateSQLTable *sql.DB
 // Функция записи в SQL таблицу
 func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string) {
 	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES (?, ?, ?)`
-	ctx, cancelfunc := context.WithCancel(context.Background())
+	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
 	stmt, err0 := db.PrepareContext(ctx, query)
 	if err0 != nil {
