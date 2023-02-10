@@ -535,6 +535,7 @@ func PostFuncApiShortenBatch(handMapPost map[string]string, handMapGet map[strin
 			log.Println("cckValue in PostFunc:", cckValue)
 			resultPostApiShortenBatch := shortPostApiShortenBatch(handMapPost, handMapGet, bp)
 			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
 			w.Write(resultPostApiShortenBatch)
 		}
 	}
