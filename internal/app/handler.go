@@ -235,7 +235,7 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 
 	baseURL := ResHandParam.BU
 	urlStruct := URLLongAndShort{}
-	if err := json.Unmarshal([]byte(rawBsp), &urlStruct); err != nil {
+	if err := json.Unmarshal(rawBsp, &urlStruct); err != nil {
 		log.Println(postBodyError)
 		return nil, err
 	}
@@ -486,6 +486,7 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 	return db
 }
 
+// ResCreateSQLTable переменная для записи результата функции CreateSQLTable
 var ResCreateSQLTable *sql.DB
 
 // Функция записи в SQL таблицу
@@ -508,4 +509,49 @@ func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string
 		log.Printf(findingRowAffected)
 	}
 	log.Printf("%d rows created ", rows)
+}
+
+type LngShrtCrltnID struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+	ShortURL      string `json:"short_url"`
+}
+
+func PostFuncApiShortenBatch(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		bp, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Println(postBodyError)
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			cck, errCck := r.Cookie("userId")
+			cckValue := ""
+			if errCck != nil {
+				cChVar := coockieCheck(w, r)
+				cckValue = cChVar
+			} else {
+				cckValue = cck.Value
+			}
+			log.Println("cckValue in PostFunc:", cckValue)
+			resultPostApiShortenBatch := shortPostApiShortenBatch(handMapPost, handMapGet, bp)
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(resultPostApiShortenBatch)
+		}
+	}
+}
+
+func shortPostApiShortenBatch(handMapPost map[string]string, handMapGet map[string]string, bp []byte) []byte {
+	var postApiShortenBatchMass []LngShrtCrltnID
+	if err := json.Unmarshal(bp, &postApiShortenBatchMass); err != nil {
+		log.Println(postBodyError)
+	}
+	for i := 0; i < len(postApiShortenBatchMass); i++ {
+		buff := randSeq(6)
+		handMapPost[postApiShortenBatchMass[i].OriginalURL] = buff
+		handMapGet[buff] = postApiShortenBatchMass[i].OriginalURL
+		postApiShortenBatchMass[i].ShortURL = base_url + buff
+		postApiShortenBatchMass[i].OriginalURL = ""
+	}
+	buff, _ := json.Marshal(postApiShortenBatchMass)
+	return buff
 }

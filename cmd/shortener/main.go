@@ -48,6 +48,7 @@ func main() {
 	resNam := MyHandler.NotAllowedMethodFunc()
 	resPAS := MyHandler.PostFuncAPIShorten(mapPost, mapGet)
 	resGAUU := MyHandler.GetFuncApiUserUrls(mapPost, mapGet)
+	resPFASB := MyHandler.PostFuncApiShortenBatch(mapPost, mapGet)
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -57,6 +58,7 @@ func main() {
 	rtr.Post("/api/shorten", resPAS)
 	rtr.MethodNotAllowed(resNam)
 	rtr.Get("/api/user/urls", resGAUU)
+	rtr.Post("/api/shorten/batch", resPFASB)
 
 	if MyHandler.ResHandParam.DBD != "" {
 		db, errDB := sql.Open("postgres", MyHandler.ResHandParam.DBD)
