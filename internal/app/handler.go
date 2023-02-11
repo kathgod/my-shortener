@@ -163,6 +163,7 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 	var sqlError error = nil
 	if ResHandParam.DBD != "" {
 		sqlError = AddRecordInTable(ResCreateSQLTable, resultPost, string(bp), cckValue)
+		log.Println(sqlError)
 	}
 	if sqlError == nil {
 		handMapPost[string(bp)] = rndRes
@@ -211,6 +212,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 			} else {
 				w.WriteHeader(http.StatusConflict)
 			}
+
 			_, err1 := w.Write(shURLByteFormat)
 			if err1 != nil {
 				http.Error(w, "Post request error", http.StatusBadRequest)
