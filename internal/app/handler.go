@@ -112,7 +112,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				}
 				w.Header().Set("Accept-Encoding", "gzip")
 			}
-			if sqlError == nil {
+			if sqlError != 0 {
 				w.WriteHeader(http.StatusCreated)
 			} else {
 				w.WriteHeader(http.StatusConflict)
@@ -127,7 +127,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 }
 
 // Функуция сокращения URL для PostFunc
-func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) (string, error) {
+func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) (string, int64) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
@@ -160,12 +160,12 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 
 	resultPost := baseURL + rndRes
 
-	var sqlError error = nil
+	var sqlError int64
 	if ResHandParam.DBD != "" {
 		sqlError = AddRecordInTable(ResCreateSQLTable, resultPost, string(bp), cckValue)
 		log.Println(sqlError)
 	}
-	if sqlError == nil {
+	if sqlError != 0 {
 		handMapPost[string(bp)] = rndRes
 		handMapGet[rndRes] = string(bp)
 		addToFile := string(bp) + "@" + rndRes + "\n"
@@ -207,7 +207,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 		} else {
 			shURLByteFormat, err0 := shortPostFuncAPIShorten(handMapPost, handMapGet, rawBsp)
 			w.Header().Set("Content-Type", "application/json")
-			if err0 == nil {
+			if err0 != 0 {
 				w.WriteHeader(http.StatusCreated)
 			} else {
 				w.WriteHeader(http.StatusConflict)
@@ -224,7 +224,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 }
 
 // Функция сокращения URL для PostFuncAPIShorten
-func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, rawBsp []byte) ([]byte, error) {
+func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, rawBsp []byte) ([]byte, int64) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
@@ -250,7 +250,6 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	urlStruct := URLLongAndShort{}
 	if err := json.Unmarshal(rawBsp, &urlStruct); err != nil {
 		log.Println(postBodyError)
-		return nil, err
 	}
 	rndRes := randSeq(6)
 	for {
@@ -262,12 +261,12 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	}
 
 	urlStruct.ShortURL = baseURL + rndRes
-	var sqlErr error = nil
+	var sqlErr int64
 	if ResHandParam.DBD != "" {
 		sqlErr = AddRecordInTable(ResCreateSQLTable, urlStruct.ShortURL, urlStruct.OriginalURL, "default")
 	}
 	var shURLByteFormat []byte
-	if sqlErr == nil {
+	if sqlErr != 0 {
 		handMapPost[urlStruct.OriginalURL] = rndRes
 		handMapGet[rndRes] = urlStruct.OriginalURL
 
@@ -497,7 +496,7 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 	if err2 != nil {
 		log.Printf(findingRowAffected)
 	}
-	log.Printf("%d rows created ", rows)
+	log.Printf("%d rows created CreateSQLTable", rows)
 	return db
 }
 
@@ -505,7 +504,7 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 var ResCreateSQLTable *sql.DB
 
 // Функция записи в SQL таблицу
-func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string) error {
+func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string) int64 {
 	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES ($1, $2, $3) ON CONFLICT (longurl) DO NOTHING`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
@@ -518,14 +517,13 @@ func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string
 	res, err1 := stmt.ExecContext(ctx, shortUrl, longUrl, userId)
 	if err1 != nil {
 		log.Println(errInsert)
-		return err1
 	}
 	rows, err2 := res.RowsAffected()
 	if err2 != nil {
 		log.Printf(findingRowAffected)
 	}
-	log.Printf("%d rows created ", rows)
-	return nil
+	log.Printf("%d rows created AddRecordInTable", rows)
+	return rows
 }
 
 type LngShrtCrltnID struct {
