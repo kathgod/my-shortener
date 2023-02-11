@@ -177,7 +177,7 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 		}
 	} else {
 		buff := handMapPost[string(bp)]
-		resultPost = baseURL + handMapGet[buff]
+		resultPost = baseURL + buff
 	}
 
 	return resultPost, sqlError
