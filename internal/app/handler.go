@@ -103,7 +103,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				cckValue = cck.Value
 			}
 			log.Println("cckValue in PostFunc:", cckValue)
-			resultPost := shortPostFunc(handMapPost, handMapGet, bp, cckValue)
+			resultPost, sqlError := shortPostFunc(handMapPost, handMapGet, bp, cckValue)
 			bResultPost := []byte(resultPost)
 			if r.Header.Get("Content-Encoding ") == "gzip" {
 				bResultPost, err = compress([]byte(resultPost))
@@ -112,19 +112,22 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 				}
 				w.Header().Set("Accept-Encoding", "gzip")
 			}
-			w.WriteHeader(http.StatusCreated)
+			if sqlError == nil {
+				w.WriteHeader(http.StatusCreated)
+			} else {
+				w.WriteHeader(http.StatusConflict)
+			}
 			_, err := w.Write(bResultPost)
 			if err != nil {
 				http.Error(w, "Post request error", http.StatusBadRequest)
 
 			}
-
 		}
 	}
 }
 
 // Функуция сокращения URL для PostFunc
-func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) string {
+func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) (string, error) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
@@ -154,21 +157,28 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 			break
 		}
 	}
-	handMapPost[string(bp)] = rndRes
-	handMapGet[rndRes] = string(bp)
-	addToFile := string(bp) + "@" + rndRes + "\n"
-	if fileStoragePath != "" {
-		_, err2 := storageFile.Write([]byte(addToFile))
-		if err2 != nil {
-			log.Println(writeFileError)
-		}
-	}
+
 	resultPost := baseURL + rndRes
 
+	var sqlError error = nil
 	if ResHandParam.DBD != "" {
-		AddRecordInTable(ResCreateSQLTable, resultPost, string(bp), cckValue)
+		sqlError = AddRecordInTable(ResCreateSQLTable, resultPost, string(bp), cckValue)
 	}
-	return resultPost
+	if sqlError == nil {
+		handMapPost[string(bp)] = rndRes
+		handMapGet[rndRes] = string(bp)
+		addToFile := string(bp) + "@" + rndRes + "\n"
+		if fileStoragePath != "" {
+			_, err2 := storageFile.Write([]byte(addToFile))
+			if err2 != nil {
+				log.Println(writeFileError)
+			}
+		}
+	} else {
+		resultPost = baseURL + handMapGet[rndRes]
+	}
+
+	return resultPost, sqlError
 }
 
 // NotAllowedMethodFunc Обработчик для незаданных методов
@@ -195,11 +205,12 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
 			shURLByteFormat, err0 := shortPostFuncAPIShorten(handMapPost, handMapGet, rawBsp)
-			if err0 != nil {
-				w.WriteHeader(http.StatusBadRequest)
-			}
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated)
+			if err0 == nil {
+				w.WriteHeader(http.StatusCreated)
+			} else {
+				w.WriteHeader(http.StatusConflict)
+			}
 			_, err1 := w.Write(shURLByteFormat)
 			if err1 != nil {
 				http.Error(w, "Post request error", http.StatusBadRequest)
@@ -248,26 +259,28 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 		}
 	}
 
-	handMapPost[urlStruct.OriginalURL] = rndRes
-	handMapGet[rndRes] = urlStruct.OriginalURL
+	urlStruct.ShortURL = baseURL + rndRes
+	var sqlErr error = nil
+	if ResHandParam.DBD != "" {
+		sqlErr = AddRecordInTable(ResCreateSQLTable, urlStruct.ShortURL, urlStruct.OriginalURL, "default")
+	}
+	var shURLByteFormat []byte
+	if sqlErr == nil {
+		handMapPost[urlStruct.OriginalURL] = rndRes
+		handMapGet[rndRes] = urlStruct.OriginalURL
 
-	addToFile := urlStruct.OriginalURL + "@" + rndRes + "\n"
-	if fileStoragePath != "" {
-		_, err := storageFile.Write([]byte(addToFile))
-		if err != nil {
-			log.Println(writeFileError)
+		addToFile := urlStruct.OriginalURL + "@" + rndRes + "\n"
+		if fileStoragePath != "" {
+			_, err := storageFile.Write([]byte(addToFile))
+			if err != nil {
+				log.Println(writeFileError)
+			}
 		}
 	}
-
-	urlStruct.ShortURL = baseURL + rndRes
-	if ResHandParam.DBD != "" {
-		AddRecordInTable(ResCreateSQLTable, urlStruct.ShortURL, urlStruct.OriginalURL, "default")
-	}
 	urlStruct.OriginalURL = ""
-	shURLByteFormat, _ := json.Marshal(urlStruct)
+	shURLByteFormat, _ = json.Marshal(urlStruct)
 
-	return shURLByteFormat, nil
-
+	return shURLByteFormat, sqlErr
 }
 
 // Функия востановления данных из файла
@@ -470,7 +483,7 @@ func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 
 // CreateSQLTable Функция создания SQL таблиц
 func CreateSQLTable(db *sql.DB) *sql.DB {
-	query := `CREATE TABLE IF NOT EXISTS idshortlongurl(shorturl text, longurl text, userid text)`
+	query := `CREATE TABLE IF NOT EXISTS idshortlongurl(shorturl text , longurl text primary key, userid text)`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
 	res, err := db.ExecContext(ctx, query)
@@ -490,8 +503,8 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 var ResCreateSQLTable *sql.DB
 
 // Функция записи в SQL таблицу
-func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string) {
-	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES ($1, $2, $3)`
+func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string) error {
+	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES ($1, $2, $3) ON CONFLICT (longurl) DO NOTHING`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
 	stmt, err0 := db.PrepareContext(ctx, query)
@@ -503,12 +516,14 @@ func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string
 	res, err1 := stmt.ExecContext(ctx, shortUrl, longUrl, userId)
 	if err1 != nil {
 		log.Println(errInsert)
+		return err1
 	}
 	rows, err2 := res.RowsAffected()
 	if err2 != nil {
 		log.Printf(findingRowAffected)
 	}
 	log.Printf("%d rows created ", rows)
+	return nil
 }
 
 type LngShrtCrltnID struct {
