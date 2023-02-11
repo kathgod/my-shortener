@@ -32,7 +32,7 @@ const (
 	openFileError        = "Open File Error"
 	compressError        = "Compress file"
 	coockieByteReadError = "Coockie Byte Read Error"
-	base_url             = "http://localhost:8080/"
+	baseurl              = "http://localhost:8080/"
 	errorCreatingTable   = "Error when creating table"
 	errorPrepareContext  = "Prepare context Error"
 	errInsert            = "Error when inserting row into table"
@@ -378,7 +378,7 @@ type idKey struct {
 }
 
 // Мапа для сохранения куки
-var resIdKey = map[string]idKey{"0": {"0", "0"}}
+var resIDKey = map[string]idKey{"0": {"0", "0"}}
 
 // Функция проверки наличия и подписи куки
 func coockieCheck(w http.ResponseWriter, r *http.Request) string {
@@ -388,13 +388,13 @@ func coockieCheck(w http.ResponseWriter, r *http.Request) string {
 		resCCh := makeNewCoockie(w)
 		return resCCh
 	} else {
-		rik := resIdKey[cck.Value]
+		rik := resIDKey[cck.Value]
 		id := []byte(rik.id)
 		key := []byte(rik.key)
 		h := hmac.New(sha256.New, key)
 		h.Write(id)
-		sgnIdKey := h.Sum(nil)
-		if hex.EncodeToString(sgnIdKey) != cck.Value {
+		sgnIDKey := h.Sum(nil)
+		if hex.EncodeToString(sgnIDKey) != cck.Value {
 			resCCh := makeNewCoockie(w)
 			return resCCh
 		}
@@ -414,24 +414,24 @@ func makeNewCoockie(w http.ResponseWriter) string {
 	}
 	h := hmac.New(sha256.New, key)
 	h.Write(id)
-	sgnIdKey := h.Sum(nil)
+	sgnIDKey := h.Sum(nil)
 	cck := &http.Cookie{
 		Name:  "userId",
-		Value: hex.EncodeToString(sgnIdKey),
+		Value: hex.EncodeToString(sgnIDKey),
 	}
 	http.SetCookie(w, cck)
-	resIdKey[hex.EncodeToString(sgnIdKey)] = idKey{hex.EncodeToString(id), hex.EncodeToString(key)}
-	return hex.EncodeToString(sgnIdKey)
+	resIDKey[hex.EncodeToString(sgnIDKey)] = idKey{hex.EncodeToString(id), hex.EncodeToString(key)}
+	return hex.EncodeToString(sgnIDKey)
 }
 
-// OrShUrl Структура для Json массива, необходимого для вывода по запросу GetFuncApiUserUrls
-type OrShUrl struct {
-	ShortUrl    string `json:"short_url"`
-	OriginalUrl string `json:"original_url"`
+// OrShURL Структура для Json массива, необходимого для вывода по запросу GetFuncApiUserUrls
+type OrShURL struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURl string `json:"original_url"`
 }
 
-// GetFuncApiUserUrls функция возвращает объект json-array, со всеми длинными и короткими URL которые создал юзер
-func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
+// GetFuncAPIUserUrls функция возвращает объект json-array, со всеми длинными и короткими URL которые создал юзер
+func GetFuncAPIUserUrls(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cck, err := r.Cookie("userId")
 		cckValue := ""
@@ -453,12 +453,12 @@ func GetFuncApiUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 		if len(bm) == 0 {
 			w.WriteHeader(http.StatusNoContent)
 		} else {
-			var buff1 OrShUrl
-			buff2 := make([]OrShUrl, len(bm))
+			var buff1 OrShURL
+			buff2 := make([]OrShURL, len(bm))
 			i := 0
-			for k, _ := range bm {
+			for k := range bm {
 
-				buff1 = OrShUrl{ShortUrl: base_url + k, OriginalUrl: bm[k]}
+				buff1 = OrShURL{ShortURL: baseurl + k, OriginalURl: bm[k]}
 				buff2[i] = buff1
 				i++
 
@@ -494,12 +494,12 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 	defer cancelfunc()
 	res, err := db.ExecContext(ctx, query)
 	if err != nil {
-		log.Printf(errorCreatingTable)
+		log.Println(errorCreatingTable)
 		log.Println(err)
 	}
 	rows, err2 := res.RowsAffected()
 	if err2 != nil {
-		log.Printf(findingRowAffected)
+		log.Println(findingRowAffected)
 	}
 	log.Printf("%d rows created CreateSQLTable", rows)
 	return db
@@ -509,7 +509,7 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 var ResCreateSQLTable *sql.DB
 
 // Функция записи в SQL таблицу
-func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string) int64 {
+func AddRecordInTable(db *sql.DB, shortURL string, longURL string, userID string) int64 {
 	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES ($1, $2, $3) ON CONFLICT (longurl) DO NOTHING`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
@@ -519,13 +519,13 @@ func AddRecordInTable(db *sql.DB, shortUrl string, longUrl string, userId string
 		log.Println(err0)
 	}
 	defer stmt.Close()
-	res, err1 := stmt.ExecContext(ctx, shortUrl, longUrl, userId)
+	res, err1 := stmt.ExecContext(ctx, shortURL, longURL, userID)
 	if err1 != nil {
 		log.Println(errInsert)
 	}
 	rows, err2 := res.RowsAffected()
 	if err2 != nil {
-		log.Printf(findingRowAffected)
+		log.Println(findingRowAffected)
 	}
 	log.Printf("%d rows created AddRecordInTable", rows)
 	return rows
@@ -537,7 +537,7 @@ type LngShrtCrltnID struct {
 	ShortURL      string `json:"short_url"`
 }
 
-func PostFuncApiShortenBatch(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
+func PostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bp, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -553,7 +553,7 @@ func PostFuncApiShortenBatch(handMapPost map[string]string, handMapGet map[strin
 				cckValue = cck.Value
 			}
 			log.Println("cckValue in PostFunc:", cckValue)
-			resultPostApiShortenBatch := shortPostApiShortenBatch(handMapPost, handMapGet, bp)
+			resultPostApiShortenBatch := shortPostAPIShortenBatch(handMapPost, handMapGet, bp)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			w.Write(resultPostApiShortenBatch)
@@ -561,18 +561,18 @@ func PostFuncApiShortenBatch(handMapPost map[string]string, handMapGet map[strin
 	}
 }
 
-func shortPostApiShortenBatch(handMapPost map[string]string, handMapGet map[string]string, bp []byte) []byte {
-	var postApiShortenBatchMass []LngShrtCrltnID
-	if err := json.Unmarshal(bp, &postApiShortenBatchMass); err != nil {
+func shortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string, bp []byte) []byte {
+	var postAPIShortenBatchMass []LngShrtCrltnID
+	if err := json.Unmarshal(bp, &postAPIShortenBatchMass); err != nil {
 		log.Println(postBodyError)
 	}
-	for i := 0; i < len(postApiShortenBatchMass); i++ {
+	for i := 0; i < len(postAPIShortenBatchMass); i++ {
 		buff := randSeq(6)
-		handMapPost[postApiShortenBatchMass[i].OriginalURL] = buff
-		handMapGet[buff] = postApiShortenBatchMass[i].OriginalURL
-		postApiShortenBatchMass[i].ShortURL = base_url + buff
-		postApiShortenBatchMass[i].OriginalURL = ""
+		handMapPost[postAPIShortenBatchMass[i].OriginalURL] = buff
+		handMapGet[buff] = postAPIShortenBatchMass[i].OriginalURL
+		postAPIShortenBatchMass[i].ShortURL = baseurl + buff
+		postAPIShortenBatchMass[i].OriginalURL = ""
 	}
-	buff, _ := json.Marshal(postApiShortenBatchMass)
+	buff, _ := json.Marshal(postAPIShortenBatchMass)
 	return buff
 }

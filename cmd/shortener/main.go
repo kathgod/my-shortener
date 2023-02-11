@@ -47,8 +47,8 @@ func main() {
 	resG := MyHandler.GetFunc(mapPost, mapGet)
 	resNam := MyHandler.NotAllowedMethodFunc()
 	resPAS := MyHandler.PostFuncAPIShorten(mapPost, mapGet)
-	resGAUU := MyHandler.GetFuncApiUserUrls(mapPost, mapGet)
-	resPFASB := MyHandler.PostFuncApiShortenBatch(mapPost, mapGet)
+	resGAUU := MyHandler.GetFuncAPIUserUrls(mapPost, mapGet)
+	resPFASB := MyHandler.PostFuncAPIShortenBatch(mapPost, mapGet)
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -62,7 +62,12 @@ func main() {
 
 	if MyHandler.ResHandParam.DBD != "" {
 		db, errDB := sql.Open("postgres", MyHandler.ResHandParam.DBD)
-		defer db.Close()
+		defer func(db *sql.DB) {
+			err := db.Close()
+			if err != nil {
+				log.Println(err)
+			}
+		}(db)
 		if errDB != nil {
 			log.Println(dbOpenError)
 		}
