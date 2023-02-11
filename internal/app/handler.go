@@ -160,7 +160,7 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 
 	resultPost := baseURL + rndRes
 
-	var sqlError int64
+	var sqlError int64 = -1
 	if ResHandParam.DBD != "" {
 		sqlError = AddRecordInTable(ResCreateSQLTable, resultPost, string(bp), cckValue)
 		log.Println(sqlError)
@@ -261,7 +261,7 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	}
 
 	urlStruct.ShortURL = baseURL + rndRes
-	var sqlErr int64
+	var sqlErr int64 = -1
 	if ResHandParam.DBD != "" {
 		sqlErr = AddRecordInTable(ResCreateSQLTable, urlStruct.ShortURL, urlStruct.OriginalURL, "default")
 	}
