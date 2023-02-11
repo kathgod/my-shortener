@@ -176,7 +176,8 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 			}
 		}
 	} else {
-		resultPost = baseURL + handMapGet[rndRes]
+		buff := handMapPost[string(bp)]
+		resultPost = baseURL + handMapGet[buff]
 	}
 
 	return resultPost, sqlError
@@ -264,6 +265,7 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	var sqlErr int64 = -1
 	if ResHandParam.DBD != "" {
 		sqlErr = AddRecordInTable(ResCreateSQLTable, urlStruct.ShortURL, urlStruct.OriginalURL, "default")
+		log.Println(sqlErr)
 	}
 	var shURLByteFormat []byte
 	if sqlErr != 0 {
@@ -277,6 +279,9 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 				log.Println(writeFileError)
 			}
 		}
+	} else {
+		buff := handMapPost[urlStruct.OriginalURL]
+		urlStruct.ShortURL = baseURL + buff
 	}
 	urlStruct.OriginalURL = ""
 	shURLByteFormat, _ = json.Marshal(urlStruct)
