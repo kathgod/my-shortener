@@ -427,7 +427,7 @@ func makeNewCoockie(w http.ResponseWriter) string {
 // OrShURL Структура для Json массива, необходимого для вывода по запросу GetFuncApiUserUrls
 type OrShURL struct {
 	ShortURL    string `json:"short_url"`
-	OriginalURl string `json:"original_url"`
+	OriginalURL string `json:"original_url"`
 }
 
 // GetFuncAPIUserUrls функция возвращает объект json-array, со всеми длинными и короткими URL которые создал юзер
@@ -458,7 +458,7 @@ func GetFuncAPIUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 			i := 0
 			for k := range bm {
 
-				buff1 = OrShURL{ShortURL: baseurl + k, OriginalURl: bm[k]}
+				buff1 = OrShURL{ShortURL: baseurl + k, OriginalURL: bm[k]}
 				buff2[i] = buff1
 				i++
 
@@ -508,7 +508,7 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 // ResCreateSQLTable переменная для записи результата функции CreateSQLTable
 var ResCreateSQLTable *sql.DB
 
-// Функция записи в SQL таблицу
+// AddRecordInTable Функция записи в SQL таблицу
 func AddRecordInTable(db *sql.DB, shortURL string, longURL string, userID string) int64 {
 	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES ($1, $2, $3) ON CONFLICT (longurl) DO NOTHING`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
@@ -553,10 +553,10 @@ func PostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[strin
 				cckValue = cck.Value
 			}
 			log.Println("cckValue in PostFunc:", cckValue)
-			resultPostApiShortenBatch := shortPostAPIShortenBatch(handMapPost, handMapGet, bp)
+			resultPostAPIShortenBatch := shortPostAPIShortenBatch(handMapPost, handMapGet, bp)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			w.Write(resultPostApiShortenBatch)
+			w.Write(resultPostAPIShortenBatch)
 		}
 	}
 }
