@@ -75,13 +75,17 @@ func main() {
 			log.Println(dbOpenError)
 		}
 		resGP := MyHandler.GetFuncPing(db)
-		resDAUU := MyHandler.DeleteFuncApiUserURLs(mapPost, mapGet, m, db)
+		resDAUU := MyHandler.DeleteFuncApiUserURLs(mapPost, mapGet, m, db, MyHandler.ResHandParam.DBD)
 
 		rtr.Get("/ping", resGP)
 		rtr.Delete("/api/user/urls", resDAUU)
 
 		MyHandler.ResCreateSQLTable = MyHandler.CreateSQLTable(db)
 		log.Println(reflect.TypeOf(MyHandler.ResCreateSQLTable))
+	} else {
+		var db *sql.DB
+		resDAUU := MyHandler.DeleteFuncApiUserURLs(mapPost, mapGet, m, db, MyHandler.ResHandParam.DBD)
+		rtr.Delete("/api/user/urls", resDAUU)
 	}
 
 	err2 := http.ListenAndServe(portNumber, rtr)

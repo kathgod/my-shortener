@@ -586,7 +586,7 @@ func shortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[stri
 }
 
 // -
-func DeleteFuncApiUserURLs(handMapPost map[string]string, handMapGet map[string]string, m sync.Mutex, db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
+func DeleteFuncApiUserURLs(handMapPost map[string]string, handMapGet map[string]string, m sync.Mutex, db *sql.DB, dbf string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m.Lock()
 		defer m.Unlock()
@@ -596,32 +596,38 @@ func DeleteFuncApiUserURLs(handMapPost map[string]string, handMapGet map[string]
 		if err1 != nil {
 			log.Println(err1)
 		}
+
 		var wg sync.WaitGroup
 		for i := 0; i < len(strm); i++ {
+			if dbf != "" {
+				wg.Add(1)
+				go func(sm []string, v int) {
+					query := `UPDATE idshortlongurl SET deleteurl=TRUE WHERE shorturl=$1`
+					ctx, cancelfunc := context.WithTimeout(context.Background(), 10*time.Second)
+					defer cancelfunc()
+					stmt, err0 := db.PrepareContext(ctx, query)
+					if err0 != nil {
+						log.Println(errorPrepareContext)
+						log.Println(err0)
+					}
+					defer stmt.Close()
+					res, _ := stmt.ExecContext(ctx, sm[v])
+					rows, err2 := res.RowsAffected()
+					if err2 != nil {
+						log.Println(findingRowAffected)
+					}
+					log.Printf("%d rows deleted DeleteFuncApiUserURLs", rows)
+					wg.Done()
+				}(strm, i)
+			}
 			wg.Add(1)
 			go func(sm []string, v int) {
-				query := `UPDATE idshortlongurl SET deleteurl=TRUE WHERE shorturl=$1`
-				ctx, cancelfunc := context.WithTimeout(context.Background(), 10*time.Second)
-				defer cancelfunc()
-				stmt, err0 := db.PrepareContext(ctx, query)
-				if err0 != nil {
-					log.Println(errorPrepareContext)
-					log.Println(err0)
-				}
-				defer stmt.Close()
-				res, _ := stmt.ExecContext(ctx, sm[v])
-				rows, err2 := res.RowsAffected()
-				if err2 != nil {
-					log.Println(findingRowAffected)
-				}
-				log.Printf("%d rows deleted DeleteFuncApiUserURLs", rows)
-				wg.Done()
+				buff := handMapGet[sm[v]]
+				handMapGet[sm[v]] = "DELETE"
+				delete(handMapPost, buff)
 			}(strm, i)
-			buff := handMapGet[strm[i]]
-			handMapGet[strm[i]] = "DELETE"
-			delete(handMapPost, buff)
-			wg.Wait()
 		}
+		wg.Wait()
 		w.WriteHeader(http.StatusAccepted)
 	}
 }
