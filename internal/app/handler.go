@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -78,8 +79,12 @@ func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *htt
 		urlGet := r.URL.Path
 		out := strings.Replace(urlGet, "/", "", -1)
 		if handMapGet[out] != "" {
-			w.Header().Set("Location", handMapGet[out])
-			w.WriteHeader(http.StatusTemporaryRedirect)
+			if handMapGet[out] != "DELETE" {
+				w.Header().Set("Location", handMapGet[out])
+				w.WriteHeader(http.StatusTemporaryRedirect)
+			} else {
+				w.WriteHeader(http.StatusGone)
+			}
 		} else {
 			w.WriteHeader(http.StatusBadRequest)
 		}
@@ -531,12 +536,14 @@ func AddRecordInTable(db *sql.DB, shortURL string, longURL string, userID string
 	return rows
 }
 
+// -
 type LngShrtCrltnID struct {
 	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 	ShortURL      string `json:"short_url"`
 }
 
+// -
 func PostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bp, err := io.ReadAll(r.Body)
@@ -561,6 +568,7 @@ func PostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[strin
 	}
 }
 
+// -
 func shortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string, bp []byte) []byte {
 	var postAPIShortenBatchMass []LngShrtCrltnID
 	if err := json.Unmarshal(bp, &postAPIShortenBatchMass); err != nil {
@@ -575,4 +583,45 @@ func shortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[stri
 	}
 	buff, _ := json.Marshal(postAPIShortenBatchMass)
 	return buff
+}
+
+// -
+func DeleteFuncApiUserURLs(handMapPost map[string]string, handMapGet map[string]string, m sync.Mutex, db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		m.Lock()
+		defer m.Unlock()
+		bbd, _ := io.ReadAll(r.Body)
+		strm := []string{}
+		err1 := json.Unmarshal(bbd, &strm)
+		if err1 != nil {
+			log.Println(err1)
+		}
+		var wg sync.WaitGroup
+		for i := 0; i < len(strm); i++ {
+			wg.Add(1)
+			go func(sm []string, v int) {
+				query := `UPDATE idshortlongurl SET deleteurl=TRUE WHERE shorturl=$1`
+				ctx, cancelfunc := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancelfunc()
+				stmt, err0 := db.PrepareContext(ctx, query)
+				if err0 != nil {
+					log.Println(errorPrepareContext)
+					log.Println(err0)
+				}
+				defer stmt.Close()
+				res, _ := stmt.ExecContext(ctx, sm[v])
+				rows, err2 := res.RowsAffected()
+				if err2 != nil {
+					log.Println(findingRowAffected)
+				}
+				log.Printf("%d rows deleted DeleteFuncApiUserURLs", rows)
+				wg.Done()
+			}(strm, i)
+			buff := handMapGet[strm[i]]
+			handMapGet[strm[i]] = "DELETE"
+			delete(handMapPost, buff)
+			wg.Wait()
+		}
+		w.WriteHeader(http.StatusAccepted)
+	}
 }
