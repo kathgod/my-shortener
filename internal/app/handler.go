@@ -625,6 +625,7 @@ func DeleteFuncApiUserURLs(handMapPost map[string]string, handMapGet map[string]
 				buff := handMapGet[sm[v]]
 				handMapGet[sm[v]] = "DELETE"
 				delete(handMapPost, buff)
+				wg.Done()
 			}(strm, i)
 		}
 		wg.Wait()
