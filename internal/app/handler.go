@@ -586,7 +586,8 @@ func shortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[stri
 }
 
 // -
-func DeleteFuncApiUserURLs(handMapPost map[string]string, handMapGet map[string]string, m sync.Mutex, db *sql.DB, dbf string) func(w http.ResponseWriter, r *http.Request) {
+func DeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, db *sql.DB, dbf string) func(w http.ResponseWriter, r *http.Request) {
+	var m sync.Mutex
 	return func(w http.ResponseWriter, r *http.Request) {
 		m.Lock()
 		defer m.Unlock()
@@ -616,7 +617,7 @@ func DeleteFuncApiUserURLs(handMapPost map[string]string, handMapGet map[string]
 					if err2 != nil {
 						log.Println(findingRowAffected)
 					}
-					log.Printf("%d rows deleted DeleteFuncApiUserURLs", rows)
+					log.Printf("%d rows deleted DeleteFuncAPIUserURLs", rows)
 					wg.Done()
 				}(strm, i)
 			}

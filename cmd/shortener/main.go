@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"reflect"
-	"sync"
 	"time"
 	MyHandler "urlshortener/internal/app"
 )
@@ -44,8 +43,6 @@ func main() {
 	mapPost := make(map[string]string)
 	mapGet := make(map[string]string)
 
-	var m sync.Mutex
-
 	resP := MyHandler.PostFunc(mapPost, mapGet)
 	resG := MyHandler.GetFunc(mapPost, mapGet)
 	resNam := MyHandler.NotAllowedMethodFunc()
@@ -75,7 +72,7 @@ func main() {
 			log.Println(dbOpenError)
 		}
 		resGP := MyHandler.GetFuncPing(db)
-		resDAUU := MyHandler.DeleteFuncApiUserURLs(mapPost, mapGet, m, db, MyHandler.ResHandParam.DBD)
+		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, db, MyHandler.ResHandParam.DBD)
 
 		rtr.Get("/ping", resGP)
 		rtr.Delete("/api/user/urls", resDAUU)
@@ -84,7 +81,7 @@ func main() {
 		log.Println(reflect.TypeOf(MyHandler.ResCreateSQLTable))
 	} else {
 		var db *sql.DB
-		resDAUU := MyHandler.DeleteFuncApiUserURLs(mapPost, mapGet, m, db, MyHandler.ResHandParam.DBD)
+		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, db, MyHandler.ResHandParam.DBD)
 		rtr.Delete("/api/user/urls", resDAUU)
 	}
 
