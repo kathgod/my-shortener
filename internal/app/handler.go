@@ -38,6 +38,9 @@ const (
 	errorPrepareContext  = "Prepare context Error"
 	errInsert            = "Error when inserting row into table"
 	findingRowAffected   = "Error when finding rows affected"
+	writeerr             = "Write error"
+	errDelete            = "Error when deleting row into table"
+	errMarshal           = "Error when Marshal json"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -55,15 +58,15 @@ func randSeq(n int) string {
 func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fileStoragePath := ResHandParam.FSP
-		storageFile, _ := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-		/*if fileError != nil {
+		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
+		if fileError != nil {
 			log.Println(openFileError)
-		}*/
+		}
 		defer func(storageFile *os.File) {
-			storageFile.Close()
-			/*if err != nil {
+			err := storageFile.Close()
+			if err != nil {
 				log.Println(closeFileError)
-			}*/
+			}
 		}(storageFile)
 		if fileStoragePath != "" {
 			count := 0
@@ -134,15 +137,15 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 // Функуция сокращения URL для PostFunc
 func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) (string, int64) {
 	fileStoragePath := ResHandParam.FSP
-	storageFile, _ := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-	/*if fileError != nil {
+	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
+	if fileError != nil {
 		log.Println(openFileError)
-	}*/
+	}
 	defer func(storageFile *os.File) {
-		storageFile.Close()
-		/*if err != nil {
+		err := storageFile.Close()
+		if err != nil {
 			log.Println(closeFileError)
-		}*/
+		}
 	}(storageFile)
 	if fileStoragePath != "" {
 		count := 0
@@ -289,7 +292,10 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 		urlStruct.ShortURL = baseURL + buff
 	}
 	urlStruct.OriginalURL = ""
-	shURLByteFormat, _ = json.Marshal(urlStruct)
+	shURLByteFormat, err := json.Marshal(urlStruct)
+	if err != nil {
+		log.Println(errMarshal)
+	}
 
 	return shURLByteFormat, sqlErr
 }
@@ -349,7 +355,12 @@ func decompress(data []byte, err0 error) ([]byte, error) {
 	if err1 != nil {
 		return data, nil
 	}
-	defer r.Close()
+	defer func(r *gzip.Reader) {
+		err := r.Close()
+		if err != nil {
+
+		}
+	}(r)
 
 	var b bytes.Buffer
 
@@ -468,11 +479,17 @@ func GetFuncAPIUserUrls(_, handMapGet map[string]string) func(w http.ResponseWri
 				i++
 
 			}
-			buff3, _ := json.Marshal(buff2)
+			buff3, err := json.Marshal(buff2)
+			if err != nil {
+				log.Println(errMarshal)
+			}
 			fmt.Println(string(buff3))
 
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(buff3)
+			_, err2 := w.Write(buff3)
+			if err2 != nil {
+				log.Println(writeerr)
+			}
 
 		}
 	}
@@ -581,7 +598,10 @@ func shortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[stri
 		postAPIShortenBatchMass[i].ShortURL = baseurl + buff
 		postAPIShortenBatchMass[i].OriginalURL = ""
 	}
-	buff, _ := json.Marshal(postAPIShortenBatchMass)
+	buff, err := json.Marshal(postAPIShortenBatchMass)
+	if err != nil {
+		log.Print(errMarshal)
+	}
 	return buff
 }
 
@@ -591,7 +611,10 @@ func DeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]
 	return func(w http.ResponseWriter, r *http.Request) {
 		m.Lock()
 		defer m.Unlock()
-		bbd, _ := io.ReadAll(r.Body)
+		bbd, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Println(err)
+		}
 		strm := []string{}
 		err1 := json.Unmarshal(bbd, &strm)
 		if err1 != nil {
@@ -612,7 +635,10 @@ func DeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]
 						log.Println(err0)
 					}
 					defer stmt.Close()
-					res, _ := stmt.ExecContext(ctx, sm[v])
+					res, err := stmt.ExecContext(ctx, sm[v])
+					if err != nil {
+						log.Println(errDelete)
+					}
 					rows, err2 := res.RowsAffected()
 					if err2 != nil {
 						log.Println(findingRowAffected)
