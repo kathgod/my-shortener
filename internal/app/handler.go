@@ -55,15 +55,15 @@ func randSeq(n int) string {
 func GetFunc(_, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fileStoragePath := ResHandParam.FSP
-		storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-		if fileError != nil {
+		storageFile, _ := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
+		/*if fileError != nil {
 			log.Println(openFileError)
-		}
+		}*/
 		defer func(storageFile *os.File) {
-			err := storageFile.Close()
-			if err != nil {
+			storageFile.Close()
+			/*if err != nil {
 				log.Println(closeFileError)
-			}
+			}*/
 		}(storageFile)
 		if fileStoragePath != "" {
 			count := 0
@@ -134,15 +134,15 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 // Функуция сокращения URL для PostFunc
 func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) (string, int64) {
 	fileStoragePath := ResHandParam.FSP
-	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
-	if fileError != nil {
+	storageFile, _ := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
+	/*if fileError != nil {
 		log.Println(openFileError)
-	}
+	}*/
 	defer func(storageFile *os.File) {
-		err := storageFile.Close()
-		if err != nil {
+		storageFile.Close()
+		/*if err != nil {
 			log.Println(closeFileError)
-		}
+		}*/
 	}(storageFile)
 	if fileStoragePath != "" {
 		count := 0
