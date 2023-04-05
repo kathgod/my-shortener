@@ -8,6 +8,8 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/http/pprof"
+	_ "net/http/pprof"
 	"reflect"
 	"time"
 	MyHandler "urlshortener/internal/app"
@@ -45,7 +47,6 @@ func main() {
 
 	resP := MyHandler.PostFunc(mapPost, mapGet)
 	resG := MyHandler.GetFunc(mapPost, mapGet)
-	resNam := MyHandler.NotAllowedMethodFunc()
 	resPAS := MyHandler.PostFuncAPIShorten(mapPost, mapGet)
 	resGAUU := MyHandler.GetFuncAPIUserUrls(mapPost, mapGet)
 	resPFASB := MyHandler.PostFuncAPIShortenBatch(mapPost, mapGet)
@@ -56,9 +57,21 @@ func main() {
 	rtr.Get("/{id}", resG)
 	rtr.Post("/", resP)
 	rtr.Post("/api/shorten", resPAS)
-	rtr.MethodNotAllowed(resNam)
 	rtr.Get("/api/user/urls", resGAUU)
 	rtr.Post("/api/shorten/batch", resPFASB)
+
+	rtr.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	rtr.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	rtr.Handle("/debug/pprof/mutex", pprof.Handler("mutex"))
+	rtr.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	rtr.Handle("/debug/pprof/block", pprof.Handler("block"))
+	rtr.Handle("/debug/pprof/allocs", pprof.Handler("allocs"))
+
+	rtr.HandleFunc("/debug/pprof/", pprof.Index)
+	rtr.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	rtr.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	rtr.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	rtr.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	if MyHandler.ResHandParam.DBD != "" {
 		db, errDB := sql.Open("postgres", MyHandler.ResHandParam.DBD)

@@ -26,7 +26,6 @@ import (
 // Константы ошибок
 const (
 	postBodyError        = "Bad Post request body"
-	notAllowMethodError  = "Not Allow method Error "
 	closeFileError       = "Close File Error"
 	writeFileError       = "Write into the File"
 	seekError            = "Seek Error"
@@ -191,22 +190,13 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 	return resultPost, sqlError
 }
 
-// NotAllowedMethodFunc Обработчик для незаданных методов
-func NotAllowedMethodFunc() func(w http.ResponseWriter, r *http.Request) {
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println(notAllowMethodError)
-		w.WriteHeader(http.StatusBadRequest)
-	}
-}
-
 // URLLongAndShort Структура для джейсон объектов
 type URLLongAndShort struct {
 	OriginalURL string `json:"url,omitempty"`
 	ShortURL    string `json:"result,omitempty"`
 }
 
-// PostFuncAPIShorten бработчик Post запросов для эндпоинта api/shorten/
+// PostFuncAPIShorten обработчик Post запросов для эндпоинта api/shorten/
 func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rawBsp, err := io.ReadAll(r.Body)
@@ -511,7 +501,7 @@ func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 
 // CreateSQLTable Функция создания SQL таблиц
 func CreateSQLTable(db *sql.DB) *sql.DB {
-	query := `CREATE TABLE IF NOT EXISTS idshortlongurl(shorturl text , longurl text primary key, userid text, deleteurl boolean default false)`
+	var query = `CREATE TABLE IF NOT EXISTS idshortlongurl(shorturl text , longurl text primary key, userid text, deleteurl boolean default false)`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
 	res, err := db.ExecContext(ctx, query)
@@ -605,7 +595,6 @@ func shortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[stri
 	return buff
 }
 
-// -
 func DeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, db *sql.DB, dbf string) func(w http.ResponseWriter, r *http.Request) {
 	var m sync.Mutex
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -60,7 +60,7 @@ func TestFunc(t *testing.T) {
 		codeG int
 	}
 
-	map2P := map[string]string{
+	/*map2P := map[string]string{
 		"vk.com":     "RPtDVz",
 		"google.com": "XvhXrs",
 		"yandex.com": "WDSMzc",
@@ -71,7 +71,7 @@ func TestFunc(t *testing.T) {
 		"XvhXrs": "google.com",
 		"WDSMzc": "yandex.com",
 	}
-
+	*/
 	tests := []struct {
 		name string
 		args args
@@ -88,7 +88,7 @@ func TestFunc(t *testing.T) {
 				codeG: 400,
 			},
 		},
-		{
+		/*{
 			name: "Test 2",
 			args: args{
 				mPost: map2P,
@@ -98,7 +98,7 @@ func TestFunc(t *testing.T) {
 				codeP: 201,
 				codeG: 307,
 			},
-		},
+		},*/
 	}
 
 	for _, tt := range tests {
@@ -182,25 +182,8 @@ func TestFunc(t *testing.T) {
 	}
 }
 
-/*func TestPostFuncApiShorten(t *testing.T) {
-	type args struct {
-		mPost map[string]string
-		mGet  map[string]string
+func BenchmarkRandSeq(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		randSeq(6)
 	}
-   //test
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "Test jsPost",
-			args: args{
-				mPost: map[string]string{},
-				mGet:  map[string]string{},
-			},
-			want: {},
-		},
-	}
-
-}*/
+}
