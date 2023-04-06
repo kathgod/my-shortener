@@ -62,6 +62,10 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 			}
 		case resFL == http.StatusConflict:
 			w.WriteHeader(http.StatusConflict)
+			_, err1 := w.Write(byteRes)
+			if err1 != nil {
+				http.Error(w, "Post request error", http.StatusBadRequest)
+			}
 		case resFL == http.StatusBadRequest:
 			w.WriteHeader(http.StatusBadRequest)
 		default:

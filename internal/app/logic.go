@@ -198,7 +198,7 @@ func logicPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	if err0 != 0 {
 		return http.StatusCreated, shURLByteFormat
 	} else {
-		return http.StatusConflict, nil
+		return http.StatusConflict, shURLByteFormat
 	}
 }
 
@@ -230,6 +230,7 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	if err := json.Unmarshal(rawBsp, &urlStruct); err != nil {
 		log.Println(postBodyError)
 	}
+	log.Println(urlStruct.OriginalURL, urlStruct.ShortURL)
 	rndRes := randSeq(6)
 	for {
 		if handMapGet[rndRes] != "" {
