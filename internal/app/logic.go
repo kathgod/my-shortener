@@ -78,10 +78,9 @@ func logicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
 	}
 	urlGet := r.URL.Path
 	out := strings.Replace(urlGet, "/", "", -1)
-	fmt.Println(handMapGet[out])
 	if handMapGet[out] != "" {
 		if handMapGet[out] != "DELETE" {
-			return http.StatusBadRequest, handMapGet[out]
+			return http.StatusTemporaryRedirect, handMapGet[out]
 		} else {
 			return http.StatusGone, ""
 		}
