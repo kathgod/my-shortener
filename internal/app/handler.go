@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -10,9 +11,11 @@ import (
 func GetFunc(handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resLF, out := logicGetFunc(r, handMapGet)
+		fmt.Println(out)
 		switch {
 		case resLF == http.StatusTemporaryRedirect:
-			w.Header().Set("Location", handMapGet[out])
+			fmt.Println(out)
+			w.Header().Set("Location", out)
 			w.WriteHeader(http.StatusTemporaryRedirect)
 		case resLF == http.StatusGone:
 			w.WriteHeader(http.StatusGone)
