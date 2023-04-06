@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/pprof"
-	_ "net/http/pprof"
 	"reflect"
 	"time"
 	MyHandler "urlshortener/internal/app"
