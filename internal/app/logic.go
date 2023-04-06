@@ -55,6 +55,7 @@ func randSeq(n int) string {
 }
 
 func logicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
+	log.Println("Enter function")
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
