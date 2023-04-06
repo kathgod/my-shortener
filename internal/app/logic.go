@@ -55,7 +55,6 @@ func randSeq(n int) string {
 }
 
 func logicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
-	log.Println("Enter function")
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
@@ -79,10 +78,9 @@ func logicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
 	}
 	urlGet := r.URL.Path
 	out := strings.Replace(urlGet, "/", "", -1)
-	log.Println(out)
 	if handMapGet[out] != "" {
 		if handMapGet[out] != "DELETE" {
-			return http.StatusBadRequest, out
+			return http.StatusBadRequest, handMapGet[out]
 		} else {
 			return http.StatusGone, ""
 		}
