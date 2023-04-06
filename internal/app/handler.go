@@ -38,6 +38,10 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 			}
 		case resFL == http.StatusConflict:
 			w.WriteHeader(http.StatusConflict)
+			_, err := w.Write(byteRes)
+			if err != nil {
+				http.Error(w, "Post request error", http.StatusBadRequest)
+			}
 		case resFL == http.StatusBadRequest:
 			w.WriteHeader(http.StatusBadRequest)
 		default:

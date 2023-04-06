@@ -120,7 +120,7 @@ func logicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 	if sqlError != 0 {
 		return http.StatusCreated, byteResultPost
 	} else {
-		return http.StatusConflict, nil
+		return http.StatusConflict, byteResultPost
 	}
 }
 
