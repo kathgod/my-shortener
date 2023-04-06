@@ -46,9 +46,9 @@ func main() {
 	mapGet := make(map[string]string)
 
 	resP := MyHandler.PostFunc(mapPost, mapGet)
-	resG := MyHandler.GetFunc(mapPost, mapGet)
+	resG := MyHandler.GetFunc(mapGet)
 	resPAS := MyHandler.PostFuncAPIShorten(mapPost, mapGet)
-	resGAUU := MyHandler.GetFuncAPIUserUrls(mapPost, mapGet)
+	resGAUU := MyHandler.GetFuncAPIUserUrls(mapGet)
 	resPFASB := MyHandler.PostFuncAPIShortenBatch(mapPost, mapGet)
 
 	rand.Seed(time.Now().UnixNano())
