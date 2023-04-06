@@ -146,11 +146,11 @@ func TestFunc(t *testing.T) {
 			recG := httptest.NewRecorder()
 
 			//Создание map для запроса Get
-			var mp1P = tt.args.mPost
+			//var mp1P = tt.args.mPost
 			var mp1G = tt.args.mGet
 
 			//Присвоение функции хендлер с заданными параметрами
-			resMfG := GetFunc(mp1P, mp1G)
+			resMfG := GetFunc(mp1G)
 
 			//Определение хендлера
 			h1 := http.HandlerFunc(resMfG)
