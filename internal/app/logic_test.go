@@ -673,3 +673,9 @@ func TestLogicDeleteFuncAPIUserURLs(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkRandSeq(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		randSeq(6)
+	}
+}
