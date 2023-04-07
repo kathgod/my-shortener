@@ -26,22 +26,29 @@ import (
 )
 
 const (
-	postBodyError        = "Bad Post request body"
-	closeFileError       = "Close File Error"
-	writeFileError       = "Write into the File"
-	seekError            = "Seek Error"
-	openFileError        = "Open File Error"
-	compressError        = "Compress file"
-	coockieByteReadError = "Coockie Byte Read Error"
-	baseurl              = "http://localhost:8080/"
-	errorCreatingTable   = "Error when creating table"
-	errorPrepareContext  = "Prepare context Error"
-	errInsert            = "Error when inserting row into table"
-	findingRowAffected   = "Error when finding rows affected"
-	writeerr             = "Write error"
-	errDelete            = "Error when deleting row into table"
-	errMarshal           = "Error when Marshal json"
+	postBodyError       = "Bad Post request body"
+	closeFileError      = "Close File Error"
+	writeFileError      = "Write into the File"
+	seekError           = "Seek Error"
+	openFileError       = "Open File Error"
+	compressError       = "Compress file"
+	cookieByteReadError = "Cookie Byte Read Error"
+	baseurl             = "http://localhost:8080/"
+	errorCreatingTable  = "Error when creating table"
+	errorPrepareContext = "Prepare context Error"
+	errInsert           = "Error when inserting row into table"
+	findingRowAffected  = "Error when finding rows affected"
+	writeerr            = "Write error"
+	errDelete           = "Error when deleting row into table"
+	errMarshal          = "Error when Marshal json"
 )
+
+// ResHandParam Структура для предобработки флагов и переменных
+var ResHandParam struct {
+	BU  string
+	FSP string
+	DBD string
+}
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -102,7 +109,7 @@ func logicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 	cck, errCck := r.Cookie("userId")
 	cckValue := ""
 	if errCck != nil {
-		cChVar := coockieCheck(w, r)
+		cChVar := cookieCheck(w, r)
 		cckValue = cChVar
 	} else {
 		cckValue = cck.Value
@@ -230,7 +237,6 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	if err := json.Unmarshal(rawBsp, &urlStruct); err != nil {
 		log.Println(postBodyError)
 	}
-	log.Println(urlStruct.OriginalURL, urlStruct.ShortURL)
 	rndRes := randSeq(6)
 	for {
 		if handMapGet[rndRes] != "" {
@@ -250,7 +256,6 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	if sqlErr != 0 {
 		handMapPost[urlStruct.OriginalURL] = rndRes
 		handMapGet[rndRes] = urlStruct.OriginalURL
-
 		addToFile := urlStruct.OriginalURL + "@" + rndRes + "\n"
 		if fileStoragePath != "" {
 			_, err := storageFile.Write([]byte(addToFile))
@@ -309,17 +314,10 @@ func HandParam(name string, flg *string) string {
 	return res
 }
 
-// ResHandParam Структура для предобработки флагов и переменных
-var ResHandParam struct {
-	BU  string
-	FSP string
-	DBD string
-}
-
 // Функция декомпресии тела запроса
 func decompress(data []byte, err0 error) ([]byte, error) {
 	if err0 != nil {
-		return nil, fmt.Errorf("error 0 %v", err0)
+		return nil, err0
 	}
 
 	r, err1 := gzip.NewReader(bytes.NewReader(data))
@@ -368,11 +366,11 @@ type idKey struct {
 var resIDKey = map[string]idKey{"0": {"0", "0"}}
 
 // Функция проверки наличия и подписи куки
-func coockieCheck(w http.ResponseWriter, r *http.Request) string {
+func cookieCheck(w http.ResponseWriter, r *http.Request) string {
 	cck, err := r.Cookie("userId")
 	if err != nil {
-		log.Println("Error1 Coockie check", err)
-		resCCh := makeNewCoockie(w)
+		log.Println("Error1 Cookie check", err)
+		resCCh := makeNewCookie(w)
 		return resCCh
 	} else {
 		rik := resIDKey[cck.Value]
@@ -382,7 +380,7 @@ func coockieCheck(w http.ResponseWriter, r *http.Request) string {
 		h.Write(id)
 		sgnIDKey := h.Sum(nil)
 		if hex.EncodeToString(sgnIDKey) != cck.Value {
-			resCCh := makeNewCoockie(w)
+			resCCh := makeNewCookie(w)
 			return resCCh
 		}
 	}
@@ -390,14 +388,14 @@ func coockieCheck(w http.ResponseWriter, r *http.Request) string {
 }
 
 // Функция для создания новых куки при провале проверки
-func makeNewCoockie(w http.ResponseWriter) string {
+func makeNewCookie(w http.ResponseWriter) string {
 	id := make([]byte, 16)
 	key := make([]byte, 16)
 	_, err1 := cr.Read(id)
 	_, err2 := cr.Read(key)
 
 	if err1 != nil || err2 != nil {
-		log.Println(coockieByteReadError)
+		log.Println(cookieByteReadError)
 	}
 	h := hmac.New(sha256.New, key)
 	h.Write(id)
@@ -421,15 +419,13 @@ func logicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter
 	cck, err := r.Cookie("userId")
 	cckValue := ""
 	if err != nil {
-		cChvar := coockieCheck(w, r)
+		cChvar := cookieCheck(w, r)
 		cckValue = cChvar
 	} else {
 		cckValue = cck.Value
 	}
-	log.Println("cChVar in GetApiFunc:", cckValue)
 	bm := make(map[string]string)
 	for k, v := range handMapGet {
-		log.Println(k[6:], v)
 		if k[6:] == cckValue {
 			bm[k] = v
 		}
@@ -452,7 +448,6 @@ func logicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter
 		if err != nil {
 			log.Println(errMarshal)
 		}
-		fmt.Println(string(buff3))
 
 		return http.StatusOK, buff3
 	}
@@ -533,7 +528,7 @@ func logicPostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[
 		cck, errCck := r.Cookie("userId")
 		cckValue := ""
 		if errCck != nil {
-			cChVar := coockieCheck(w, r)
+			cChVar := cookieCheck(w, r)
 			cckValue = cChVar
 		} else {
 			cckValue = cck.Value
@@ -573,7 +568,7 @@ func logicDeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[st
 	if err != nil {
 		log.Println(err)
 	}
-	strm := []string{}
+	var strm []string
 	err1 := json.Unmarshal(bbd, &strm)
 	if err1 != nil {
 		log.Println(err1)
@@ -592,7 +587,12 @@ func logicDeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[st
 					log.Println(errorPrepareContext)
 					log.Println(err0)
 				}
-				defer stmt.Close()
+				defer func(stmt *sql.Stmt) {
+					err := stmt.Close()
+					if err != nil {
+						log.Println(err)
+					}
+				}(stmt)
 				res, err := stmt.ExecContext(ctx, sm[v])
 				if err != nil {
 					log.Println(errDelete)
