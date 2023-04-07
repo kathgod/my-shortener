@@ -21,19 +21,11 @@ import (
 )
 
 func TestLogicGetFunc(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "testfile")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(tmpfile.Name())
-
 	handMapGet := map[string]string{
 		"key1": "value1",
 		"key2": "value2",
 		"key3": "DELETE",
 	}
-
-	ResHandParam.FSP = tmpfile.Name()
 
 	tests := []struct {
 		name     string
