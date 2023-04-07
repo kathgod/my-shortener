@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -184,7 +183,7 @@ func TestShortPostFuncAPIShorten(t *testing.T) {
 }
 
 func TestRecovery(t *testing.T) {
-	tmpFile, err := ioutil.TempFile("", "testfile")
+	tmpFile, err := os.CreateTemp("", "testfile")
 	if err != nil {
 		t.Fatal("Failed to create temporary file")
 	}
@@ -395,6 +394,7 @@ func TestMakeNewCookie(t *testing.T) {
 	}
 
 	cookies := mockWriter.Result().Cookies()
+	defer mockWriter.Result().Body.Close()
 	var foundCookie bool
 	for _, cookie := range cookies {
 		if cookie.Name == "userId" && cookie.Value == newCookieValue {
@@ -442,7 +442,7 @@ func TestLogicGetFuncAPIUserUrls(t *testing.T) {
 		t.Errorf("Failed to unmarshal response data: %v", err)
 	}
 
-	if (!reflect.DeepEqual(responseURLs, expectedURLs1)) || (!reflect.DeepEqual(responseURLs, expectedURLs2)) {
+	if (!reflect.DeepEqual(responseURLs, expectedURLs1)) && (!reflect.DeepEqual(responseURLs, expectedURLs2)) {
 		t.Errorf("Expected response URLs to be %v, but got %v", expectedURLs1, responseURLs)
 		t.Errorf("Expected response URLs to be %v, but got %v", expectedURLs2, responseURLs)
 	}
