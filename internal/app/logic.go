@@ -43,7 +43,7 @@ const (
 	errMarshal          = "Error when Marshal json"
 )
 
-// ResHandParam Структура для предобработки флагов и переменных
+// ResHandParam Структура для предобработки флагов и переменных.
 var ResHandParam struct {
 	BU  string
 	FSP string
@@ -52,7 +52,7 @@ var ResHandParam struct {
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-// Функция для формирования случайной поледовательности
+// randSeq Функция для формирования случайной поледовательности.
 func randSeq(n int) string {
 	b := make([]rune, n)
 	for i := range b {
@@ -131,7 +131,7 @@ func logicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 	}
 }
 
-// Функуция сокращения URL для PostFunc
+// shortPostFunc Функуция сокращения URL для PostFunc.
 func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) (string, int64) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
@@ -188,7 +188,7 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 	return resultPost, sqlError
 }
 
-// URLLongAndShort Структура для джейсон объектов
+// URLLongAndShort Структура для джейсон объектов.
 type URLLongAndShort struct {
 	OriginalURL string `json:"url,omitempty"`
 	ShortURL    string `json:"result,omitempty"`
@@ -209,7 +209,7 @@ func logicPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	}
 }
 
-// Функция сокращения URL для PostFuncAPIShorten
+// shortPostFuncAPIShorten Функция сокращения URL для PostFuncAPIShorten.
 func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, rawBsp []byte) ([]byte, int64) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
@@ -276,7 +276,7 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	return shURLByteFormat, sqlErr
 }
 
-// Функия востановления данных из файла
+// recovery Функия востановления данных из файла.
 func recovery(handMapPost map[string]string, handMapGet map[string]string, file *os.File) {
 	_, err := file.Seek(0, 0)
 	if err != nil {
@@ -295,7 +295,7 @@ func recovery(handMapPost map[string]string, handMapGet map[string]string, file 
 
 }
 
-// HandParam Функция обработки флагов
+// HandParam Функция обработки флагов.
 func HandParam(name string, flg *string) string {
 	res := ""
 	globEnv := os.Getenv(name)
@@ -314,7 +314,7 @@ func HandParam(name string, flg *string) string {
 	return res
 }
 
-// Функция декомпресии тела запроса
+// decompress Функция декомпресии тела запроса.
 func decompress(data []byte, err0 error) ([]byte, error) {
 	if err0 != nil {
 		return nil, err0
@@ -341,7 +341,7 @@ func decompress(data []byte, err0 error) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-// Функция компресии тела ответа
+// compress Функция компресии тела ответа.
 func compress(data []byte) ([]byte, error) {
 	var b bytes.Buffer
 	w := gzip.NewWriter(&b)
@@ -356,16 +356,16 @@ func compress(data []byte) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-// Структура для мапы сохранений куки
+// Структура для мапы сохранений куки.
 type idKey struct {
 	id  string
 	key string
 }
 
-// Мапа для сохранения куки
+// Мапа для сохранения куки.
 var resIDKey = map[string]idKey{"0": {"0", "0"}}
 
-// Функция проверки наличия и подписи куки
+// cookieCheck Функция проверки наличия и подписи куки.
 func cookieCheck(w http.ResponseWriter, r *http.Request) string {
 	cck, err := r.Cookie("userId")
 	if err != nil {
@@ -387,7 +387,7 @@ func cookieCheck(w http.ResponseWriter, r *http.Request) string {
 	return cck.Value
 }
 
-// Функция для создания новых куки при провале проверки
+// makeNewCookie Функция для создания новых куки при провале проверки.
 func makeNewCookie(w http.ResponseWriter) string {
 	id := make([]byte, 16)
 	key := make([]byte, 16)
@@ -409,7 +409,7 @@ func makeNewCookie(w http.ResponseWriter) string {
 	return hex.EncodeToString(sgnIDKey)
 }
 
-// OrShURL Структура для Json массива, необходимого для вывода по запросу GetFuncApiUserUrls
+// OrShURL Структура для Json массива, необходимого для вывода по запросу GetFuncApiUserUrls.
 type OrShURL struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
@@ -464,7 +464,7 @@ func logicGetFuncPing(db *sql.DB) int {
 	}
 }
 
-// CreateSQLTable Функция создания SQL таблиц
+// CreateSQLTable Функция создания SQL таблиц.
 func CreateSQLTable(db *sql.DB) *sql.DB {
 	query := `CREATE TABLE IF NOT EXISTS idshortlongurl(shorturl text , longurl text primary key, userid text, deleteurl boolean default false)`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
@@ -482,10 +482,10 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 	return db
 }
 
-// ResCreateSQLTable переменная для записи результата функции CreateSQLTable
+// ResCreateSQLTable переменная для записи результата функции CreateSQLTable.
 var ResCreateSQLTable *sql.DB
 
-// AddRecordInTable Функция записи в SQL таблицу
+// AddRecordInTable Функция записи в SQL таблицу.
 func AddRecordInTable(db *sql.DB, shortURL string, longURL string, userID string) int64 {
 	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES ($1, $2, $3) ON CONFLICT (longurl) DO NOTHING`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
@@ -513,6 +513,7 @@ func AddRecordInTable(db *sql.DB, shortURL string, longURL string, userID string
 	return rows
 }
 
+// LngShrtCrltnID Структура для Json массива, необходимого для вывода по запросу shortPostAPIShortenBatch.
 type LngShrtCrltnID struct {
 	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
@@ -539,7 +540,6 @@ func logicPostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[
 	}
 }
 
-// -
 func shortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string, bp []byte) []byte {
 	var postAPIShortenBatchMass []LngShrtCrltnID
 	if err := json.Unmarshal(bp, &postAPIShortenBatchMass); err != nil {
