@@ -426,9 +426,14 @@ func TestLogicGetFuncAPIUserUrls(t *testing.T) {
 		t.Errorf("Expected status to be http.StatusOK, but got %v", status)
 	}
 
-	expectedURLs := []OrShURL{
+	expectedURLs1 := []OrShURL{
 		{ShortURL: baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
 		{ShortURL: baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
+	}
+
+	expectedURLs2 := []OrShURL{
+		{ShortURL: baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
+		{ShortURL: baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
 	}
 
 	var responseURLs []OrShURL
@@ -437,8 +442,9 @@ func TestLogicGetFuncAPIUserUrls(t *testing.T) {
 		t.Errorf("Failed to unmarshal response data: %v", err)
 	}
 
-	if !reflect.DeepEqual(responseURLs, expectedURLs) {
-		t.Errorf("Expected response URLs to be %v, but got %v", expectedURLs, responseURLs)
+	if (!reflect.DeepEqual(responseURLs, expectedURLs1)) || (!reflect.DeepEqual(responseURLs, expectedURLs2)) {
+		t.Errorf("Expected response URLs to be %v, but got %v", expectedURLs1, responseURLs)
+		t.Errorf("Expected response URLs to be %v, but got %v", expectedURLs2, responseURLs)
 	}
 }
 
