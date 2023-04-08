@@ -399,14 +399,16 @@ func TestLogicGetFuncAPIUserUrls(t *testing.T) {
 		t.Errorf("Expected status to be http.StatusOK, but got %v", status)
 	}
 
+	baseurl := "http://localhost:8080/"
+	
 	expectedURLs1 := []h.OrShURL{
-		{ShortURL: h.Baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
-		{ShortURL: h.Baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
+		{ShortURL: baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
+		{ShortURL: baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
 	}
 
 	expectedURLs2 := []h.OrShURL{
-		{ShortURL: h.Baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
-		{ShortURL: h.Baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
+		{ShortURL: baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
+		{ShortURL: baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
 	}
 
 	var responseURLs []h.OrShURL
