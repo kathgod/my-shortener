@@ -52,7 +52,7 @@ var ResHandParam struct {
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-// randSeq Функция для формирования случайной поледовательности.
+// RandSeq Функция для формирования случайной поледовательности.
 func RandSeq(n int) string {
 	b := make([]rune, n)
 	for i := range b {
@@ -133,7 +133,7 @@ func LogicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 	}
 }
 
-// shortPostFunc Функуция сокращения URL для PostFunc.
+// ShortPostFunc Функуция сокращения URL для PostFunc.
 func ShortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) (string, int64) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
@@ -196,6 +196,7 @@ type URLLongAndShort struct {
 	ShortURL    string `json:"result,omitempty"`
 }
 
+// LogicPostFuncAPIShorten функция реализующая логику для хендлера PostFuncAPIShorten
 func LogicPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, w http.ResponseWriter, r *http.Request) (int, []byte) {
 	rawBsp, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -211,7 +212,7 @@ func LogicPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	}
 }
 
-// shortPostFuncAPIShorten Функция сокращения URL для PostFuncAPIShorten.
+// ShortPostFuncAPIShorten Функция сокращения URL для PostFuncAPIShorten.
 func ShortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, rawBsp []byte) ([]byte, int64) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
@@ -278,7 +279,7 @@ func ShortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	return shURLByteFormat, sqlErr
 }
 
-// recovery Функия востановления данных из файла.
+// Recovery Функия востановления данных из файла.
 func Recovery(handMapPost map[string]string, handMapGet map[string]string, file *os.File) {
 	_, err := file.Seek(0, 0)
 	if err != nil {
@@ -316,7 +317,7 @@ func HandParam(name string, flg *string) string {
 	return res
 }
 
-// decompress Функция декомпресии тела запроса.
+// Decompress Функция декомпресии тела запроса.
 func Decompress(data []byte, err0 error) ([]byte, error) {
 	if err0 != nil {
 		return nil, err0
@@ -343,7 +344,7 @@ func Decompress(data []byte, err0 error) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-// compress Функция компресии тела ответа.
+// Compress Функция компресии тела ответа.
 func Compress(data []byte) ([]byte, error) {
 	var b bytes.Buffer
 	w := gzip.NewWriter(&b)
@@ -358,16 +359,16 @@ func Compress(data []byte) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-// Структура для мапы сохранений куки.
+// IDKey Структура для мапы сохранений куки.
 type IDKey struct {
 	id  string
 	key string
 }
 
-// Мапа для сохранения куки.
+// ResIDKey Мапа для сохранения куки.
 var ResIDKey = map[string]IDKey{"0": {"0", "0"}}
 
-// cookieCheck Функция проверки наличия и подписи куки.
+// CookieCheck Функция проверки наличия и подписи куки.
 func CookieCheck(w http.ResponseWriter, r *http.Request) string {
 	cck, err := r.Cookie("userId")
 	if err != nil {
@@ -389,7 +390,7 @@ func CookieCheck(w http.ResponseWriter, r *http.Request) string {
 	return cck.Value
 }
 
-// makeNewCookie Функция для создания новых куки при провале проверки.
+// MakeNewCookie Функция для создания новых куки при провале проверки.
 func MakeNewCookie(w http.ResponseWriter) string {
 	id := make([]byte, 16)
 	key := make([]byte, 16)
@@ -417,6 +418,7 @@ type OrShURL struct {
 	OriginalURL string `json:"original_url"`
 }
 
+// LogicGetFuncAPIUserUrls логическая функция для хендлера GetFuncAPIUserUrls
 func LogicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter, r *http.Request) (int, []byte) {
 	cck, err := r.Cookie("userId")
 	cckValue := ""
@@ -455,6 +457,7 @@ func LogicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter
 	}
 }
 
+// LogicGetFuncPing функция логики для хендлера GetFuncPing
 func LogicGetFuncPing(db *sql.DB) int {
 	log.Println("In func", ResHandParam.DBD)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
@@ -522,6 +525,7 @@ type LngShrtCrltnID struct {
 	ShortURL      string `json:"short_url"`
 }
 
+// LogicPostFuncAPIShortenBatch функция логики для хендлера PostFuncAPIShortenBatch
 func LogicPostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string, w http.ResponseWriter, r *http.Request) (int, []byte) {
 	bp, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -542,6 +546,7 @@ func LogicPostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[
 	}
 }
 
+// ShortPostAPIShortenBatch функция сокрашения
 func ShortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string, bp []byte) []byte {
 	var postAPIShortenBatchMass []LngShrtCrltnID
 	if err := json.Unmarshal(bp, &postAPIShortenBatchMass); err != nil {
@@ -562,6 +567,7 @@ func ShortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[stri
 
 }
 
+// LogicDeleteFuncAPIUserURLs функция логики для хендлера DeleteFuncAPIUserURLs
 func LogicDeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, db *sql.DB, dbf string, r *http.Request) int {
 	var m sync.Mutex
 	m.Lock()
