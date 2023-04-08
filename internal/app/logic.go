@@ -33,7 +33,7 @@ const (
 	openFileError       = "Open File Error"
 	compressError       = "Compress file"
 	cookieByteReadError = "Cookie Byte Read Error"
-	baseurl             = "http://localhost:8080/"
+	Baseurl             = "http://localhost:8080/"
 	errorCreatingTable  = "Error when creating table"
 	errorPrepareContext = "Prepare context Error"
 	errInsert           = "Error when inserting row into table"
@@ -53,7 +53,7 @@ var ResHandParam struct {
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 // randSeq Функция для формирования случайной поледовательности.
-func randSeq(n int) string {
+func RandSeq(n int) string {
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]
@@ -61,7 +61,8 @@ func randSeq(n int) string {
 	return string(b)
 }
 
-func logicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
+// LogicGetFunc функция логики хендлера GetFunc
+func LogicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
@@ -80,7 +81,7 @@ func logicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
 		}
 		if count == 0 {
 			mokMap := map[string]string{}
-			recovery(mokMap, handMapGet, storageFile)
+			Recovery(mokMap, handMapGet, storageFile)
 		}
 	}
 	urlGet := r.URL.Path
@@ -99,9 +100,10 @@ func logicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
 
 }
 
-func logicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[string]string, handMapGet map[string]string) (int, []byte) {
+// LogicPostFunc функция логики хендлера PostFunc
+func LogicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[string]string, handMapGet map[string]string) (int, []byte) {
 
-	bp, err := decompress(io.ReadAll(r.Body))
+	bp, err := Decompress(io.ReadAll(r.Body))
 	if err != nil {
 		log.Println(postBodyError)
 		return http.StatusBadRequest, nil
@@ -109,16 +111,16 @@ func logicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 	cck, errCck := r.Cookie("userId")
 	cckValue := ""
 	if errCck != nil {
-		cChVar := cookieCheck(w, r)
+		cChVar := CookieCheck(w, r)
 		cckValue = cChVar
 	} else {
 		cckValue = cck.Value
 	}
 	log.Println("cckValue in PostFunc:", cckValue)
-	resultPost, sqlError := shortPostFunc(handMapPost, handMapGet, bp, cckValue)
+	resultPost, sqlError := ShortPostFunc(handMapPost, handMapGet, bp, cckValue)
 	byteResultPost := []byte(resultPost)
 	if r.Header.Get("Content-Encoding ") == "gzip" {
-		byteResultPost, err = compress([]byte(resultPost))
+		byteResultPost, err = Compress([]byte(resultPost))
 		if err != nil {
 			log.Println(compressError)
 		}
@@ -132,7 +134,7 @@ func logicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 }
 
 // shortPostFunc Функуция сокращения URL для PostFunc.
-func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) (string, int64) {
+func ShortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) (string, int64) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
@@ -150,14 +152,14 @@ func shortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 			count++
 		}
 		if count == 0 {
-			recovery(handMapPost, handMapGet, storageFile)
+			Recovery(handMapPost, handMapGet, storageFile)
 		}
 	}
 	baseURL := ResHandParam.BU
-	rndRes := randSeq(6) + cckValue
+	rndRes := RandSeq(6) + cckValue
 	for {
 		if handMapGet[string(bp)] != "" {
-			rndRes = randSeq(6) + cckValue
+			rndRes = RandSeq(6) + cckValue
 		} else {
 			break
 		}
@@ -194,13 +196,13 @@ type URLLongAndShort struct {
 	ShortURL    string `json:"result,omitempty"`
 }
 
-func logicPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, w http.ResponseWriter, r *http.Request) (int, []byte) {
+func LogicPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, w http.ResponseWriter, r *http.Request) (int, []byte) {
 	rawBsp, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println(postBodyError)
 		return http.StatusBadRequest, nil
 	}
-	shURLByteFormat, err0 := shortPostFuncAPIShorten(handMapPost, handMapGet, rawBsp)
+	shURLByteFormat, err0 := ShortPostFuncAPIShorten(handMapPost, handMapGet, rawBsp)
 	w.Header().Set("Content-Type", "application/json")
 	if err0 != 0 {
 		return http.StatusCreated, shURLByteFormat
@@ -210,7 +212,7 @@ func logicPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 }
 
 // shortPostFuncAPIShorten Функция сокращения URL для PostFuncAPIShorten.
-func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, rawBsp []byte) ([]byte, int64) {
+func ShortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, rawBsp []byte) ([]byte, int64) {
 	fileStoragePath := ResHandParam.FSP
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
@@ -228,7 +230,7 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 			count++
 		}
 		if count == 0 {
-			recovery(handMapPost, handMapGet, storageFile)
+			Recovery(handMapPost, handMapGet, storageFile)
 		}
 	}
 
@@ -237,10 +239,10 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	if err := json.Unmarshal(rawBsp, &urlStruct); err != nil {
 		log.Println(postBodyError)
 	}
-	rndRes := randSeq(6)
+	rndRes := RandSeq(6)
 	for {
 		if handMapGet[rndRes] != "" {
-			rndRes = randSeq(6)
+			rndRes = RandSeq(6)
 		} else {
 			break
 		}
@@ -277,7 +279,7 @@ func shortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 }
 
 // recovery Функия востановления данных из файла.
-func recovery(handMapPost map[string]string, handMapGet map[string]string, file *os.File) {
+func Recovery(handMapPost map[string]string, handMapGet map[string]string, file *os.File) {
 	_, err := file.Seek(0, 0)
 	if err != nil {
 		log.Println(seekError)
@@ -315,7 +317,7 @@ func HandParam(name string, flg *string) string {
 }
 
 // decompress Функция декомпресии тела запроса.
-func decompress(data []byte, err0 error) ([]byte, error) {
+func Decompress(data []byte, err0 error) ([]byte, error) {
 	if err0 != nil {
 		return nil, err0
 	}
@@ -342,7 +344,7 @@ func decompress(data []byte, err0 error) ([]byte, error) {
 }
 
 // compress Функция компресии тела ответа.
-func compress(data []byte) ([]byte, error) {
+func Compress(data []byte) ([]byte, error) {
 	var b bytes.Buffer
 	w := gzip.NewWriter(&b)
 	_, err := w.Write(data)
@@ -357,30 +359,30 @@ func compress(data []byte) ([]byte, error) {
 }
 
 // Структура для мапы сохранений куки.
-type idKey struct {
+type IDKey struct {
 	id  string
 	key string
 }
 
 // Мапа для сохранения куки.
-var resIDKey = map[string]idKey{"0": {"0", "0"}}
+var ResIDKey = map[string]IDKey{"0": {"0", "0"}}
 
 // cookieCheck Функция проверки наличия и подписи куки.
-func cookieCheck(w http.ResponseWriter, r *http.Request) string {
+func CookieCheck(w http.ResponseWriter, r *http.Request) string {
 	cck, err := r.Cookie("userId")
 	if err != nil {
 		log.Println("Error1 Cookie check", err)
-		resCCh := makeNewCookie(w)
+		resCCh := MakeNewCookie(w)
 		return resCCh
 	} else {
-		rik := resIDKey[cck.Value]
+		rik := ResIDKey[cck.Value]
 		id := []byte(rik.id)
 		key := []byte(rik.key)
 		h := hmac.New(sha256.New, key)
 		h.Write(id)
 		sgnIDKey := h.Sum(nil)
 		if hex.EncodeToString(sgnIDKey) != cck.Value {
-			resCCh := makeNewCookie(w)
+			resCCh := MakeNewCookie(w)
 			return resCCh
 		}
 	}
@@ -388,7 +390,7 @@ func cookieCheck(w http.ResponseWriter, r *http.Request) string {
 }
 
 // makeNewCookie Функция для создания новых куки при провале проверки.
-func makeNewCookie(w http.ResponseWriter) string {
+func MakeNewCookie(w http.ResponseWriter) string {
 	id := make([]byte, 16)
 	key := make([]byte, 16)
 	_, err1 := cr.Read(id)
@@ -405,7 +407,7 @@ func makeNewCookie(w http.ResponseWriter) string {
 		Value: hex.EncodeToString(sgnIDKey),
 	}
 	http.SetCookie(w, cck)
-	resIDKey[hex.EncodeToString(sgnIDKey)] = idKey{hex.EncodeToString(id), hex.EncodeToString(key)}
+	ResIDKey[hex.EncodeToString(sgnIDKey)] = IDKey{hex.EncodeToString(id), hex.EncodeToString(key)}
 	return hex.EncodeToString(sgnIDKey)
 }
 
@@ -415,11 +417,11 @@ type OrShURL struct {
 	OriginalURL string `json:"original_url"`
 }
 
-func logicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter, r *http.Request) (int, []byte) {
+func LogicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter, r *http.Request) (int, []byte) {
 	cck, err := r.Cookie("userId")
 	cckValue := ""
 	if err != nil {
-		cChvar := cookieCheck(w, r)
+		cChvar := CookieCheck(w, r)
 		cckValue = cChvar
 	} else {
 		cckValue = cck.Value
@@ -439,7 +441,7 @@ func logicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter
 		i := 0
 		for k := range bm {
 
-			buff1 = OrShURL{ShortURL: baseurl + k, OriginalURL: bm[k]}
+			buff1 = OrShURL{ShortURL: Baseurl + k, OriginalURL: bm[k]}
 			buff2[i] = buff1
 			i++
 
@@ -453,7 +455,7 @@ func logicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter
 	}
 }
 
-func logicGetFuncPing(db *sql.DB) int {
+func LogicGetFuncPing(db *sql.DB) int {
 	log.Println("In func", ResHandParam.DBD)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
@@ -520,7 +522,7 @@ type LngShrtCrltnID struct {
 	ShortURL      string `json:"short_url"`
 }
 
-func logicPostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string, w http.ResponseWriter, r *http.Request) (int, []byte) {
+func LogicPostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string, w http.ResponseWriter, r *http.Request) (int, []byte) {
 	bp, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println(postBodyError)
@@ -529,27 +531,27 @@ func logicPostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[
 		cck, errCck := r.Cookie("userId")
 		cckValue := ""
 		if errCck != nil {
-			cChVar := cookieCheck(w, r)
+			cChVar := CookieCheck(w, r)
 			cckValue = cChVar
 		} else {
 			cckValue = cck.Value
 		}
 		log.Println("cckValue in PostFunc:", cckValue)
-		resultPostAPIShortenBatch := shortPostAPIShortenBatch(handMapPost, handMapGet, bp)
+		resultPostAPIShortenBatch := ShortPostAPIShortenBatch(handMapPost, handMapGet, bp)
 		return http.StatusCreated, resultPostAPIShortenBatch
 	}
 }
 
-func shortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string, bp []byte) []byte {
+func ShortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string, bp []byte) []byte {
 	var postAPIShortenBatchMass []LngShrtCrltnID
 	if err := json.Unmarshal(bp, &postAPIShortenBatchMass); err != nil {
 		log.Println(postBodyError)
 	}
 	for i := 0; i < len(postAPIShortenBatchMass); i++ {
-		buff := randSeq(6)
+		buff := RandSeq(6)
 		handMapPost[postAPIShortenBatchMass[i].OriginalURL] = buff
 		handMapGet[buff] = postAPIShortenBatchMass[i].OriginalURL
-		postAPIShortenBatchMass[i].ShortURL = baseurl + buff
+		postAPIShortenBatchMass[i].ShortURL = Baseurl + buff
 		postAPIShortenBatchMass[i].OriginalURL = ""
 	}
 	buff, err := json.Marshal(postAPIShortenBatchMass)
@@ -560,7 +562,7 @@ func shortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[stri
 
 }
 
-func logicDeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, db *sql.DB, dbf string, r *http.Request) int {
+func LogicDeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, db *sql.DB, dbf string, r *http.Request) int {
 	var m sync.Mutex
 	m.Lock()
 	defer m.Unlock()

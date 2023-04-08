@@ -1,4 +1,4 @@
-package handler
+package handler_test
 
 import (
 	"bytes"
@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
+	h "urlshortener/internal/app"
 )
 
 func TestLogicGetFunc(t *testing.T) {
@@ -43,7 +44,7 @@ func TestLogicGetFunc(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			status, _ := logicGetFunc(req, handMapGet)
+			status, _ := h.LogicGetFunc(req, handMapGet)
 
 			if status != test.expected {
 				t.Errorf("Expected status code %d, but got %d", test.expected, status)
@@ -83,7 +84,7 @@ func TestLogicPostFunc(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 
-			status, _ := logicPostFunc(rr, req, handMapPost, handMapGet)
+			status, _ := h.LogicPostFunc(rr, req, handMapPost, handMapGet)
 
 			if status != test.expectedStatus {
 				t.Errorf("Expected status code %d, but got %d", test.expectedStatus, status)
@@ -107,12 +108,12 @@ func TestShortPostFunc(t *testing.T) {
 		wantError  int64
 		wantPrefix string
 	}{
-		{"Test valid input", []byte("test data"), "123456", -1, ResHandParam.BU},
+		{"Test valid input", []byte("test data"), "123456", -1, h.ResHandParam.BU},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resultPost, sqlError := shortPostFunc(handMapPost, handMapGet, test.bp, test.cckValue)
+			resultPost, sqlError := h.ShortPostFunc(handMapPost, handMapGet, test.bp, test.cckValue)
 
 			if sqlError != test.wantError {
 				t.Errorf("Expected error code %d, but got %d", test.wantError, sqlError)
@@ -146,7 +147,7 @@ func TestLogicPostFuncAPIShorten(t *testing.T) {
 			r := httptest.NewRequest("POST", "http://localhost:8080/api/shorten", bytes.NewBuffer(test.rawBsp))
 			w := httptest.NewRecorder()
 
-			status, _ := logicPostFuncAPIShorten(handMapPost, handMapGet, w, r)
+			status, _ := h.LogicPostFuncAPIShorten(handMapPost, handMapGet, w, r)
 
 			if status != test.expectedStatus {
 				t.Errorf("Expected status code %d, but got %d", test.expectedStatus, status)
@@ -173,7 +174,7 @@ func TestShortPostFuncAPIShorten(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, status := shortPostFuncAPIShorten(handMapPost, handMapGet, test.rawBsp)
+			_, status := h.ShortPostFuncAPIShorten(handMapPost, handMapGet, test.rawBsp)
 
 			if status != test.expectedStatus {
 				t.Errorf("Expected status code %d, but got %d", test.expectedStatus, status)
@@ -196,7 +197,7 @@ func TestRecovery(t *testing.T) {
 
 	handMapPost := make(map[string]string)
 	handMapGet := make(map[string]string)
-	recovery(handMapPost, handMapGet, tmpFile)
+	h.Recovery(handMapPost, handMapGet, tmpFile)
 
 	expectedHandMapPost := map[string]string{
 		"https://example1.com": "short1",
@@ -240,7 +241,7 @@ func TestHandParam(t *testing.T) {
 			}
 
 			flg := tc.flg
-			result := HandParam(tc.name, &flg)
+			result := h.HandParam(tc.name, &flg)
 			if result != tc.expected {
 				t.Errorf("Expected %s, but got %s", tc.expected, result)
 			}
@@ -291,7 +292,7 @@ func TestDecompress(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, _ := decompress(tc.data, tc.err0)
+			result, _ := h.Decompress(tc.data, tc.err0)
 			if !reflect.DeepEqual(result, tc.expected) {
 				t.Errorf("Expected data %v, but got %v", tc.expected, result)
 			}
@@ -319,14 +320,14 @@ func TestCompress(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			compressedData, err := compress(tc.data)
+			compressedData, err := h.Compress(tc.data)
 
 			if !errors.Is(err, tc.expectedErr) {
 				t.Errorf("Expected error %v, but got %v", tc.expectedErr, err)
 			}
 
 			if err == nil {
-				decompressedData, err := decompress(compressedData, nil)
+				decompressedData, err := h.Decompress(compressedData, nil)
 				if err != nil {
 					t.Errorf("Failed to decompress compressed data: %v", err)
 				} else if !bytes.Equal(decompressedData, tc.data) {
@@ -371,7 +372,7 @@ func TestCookieCheck(t *testing.T) {
 				req.AddCookie(&http.Cookie{Name: tc.cookieName, Value: tc.cookieValue})
 			}
 
-			result := cookieCheck(mockWriter, req)
+			result := h.CookieCheck(mockWriter, req)
 
 			if tc.expectNewCCh && (result == tc.cookieValue) {
 				t.Errorf("Expected a new cookie, but got the same cookie value: %v", result)
@@ -392,23 +393,23 @@ func TestLogicGetFuncAPIUserUrls(t *testing.T) {
 	mockRequest := httptest.NewRequest("GET", "/api/user/urls", nil)
 	mockRequest.AddCookie(&http.Cookie{Name: "userId", Value: "bcdef"})
 
-	status, data := logicGetFuncAPIUserUrls(handMapGet, mockWriter, mockRequest)
+	status, data := h.LogicGetFuncAPIUserUrls(handMapGet, mockWriter, mockRequest)
 
 	if status != http.StatusOK {
 		t.Errorf("Expected status to be http.StatusOK, but got %v", status)
 	}
 
-	expectedURLs1 := []OrShURL{
-		{ShortURL: baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
-		{ShortURL: baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
+	expectedURLs1 := []h.OrShURL{
+		{ShortURL: h.Baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
+		{ShortURL: h.Baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
 	}
 
-	expectedURLs2 := []OrShURL{
-		{ShortURL: baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
-		{ShortURL: baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
+	expectedURLs2 := []h.OrShURL{
+		{ShortURL: h.Baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
+		{ShortURL: h.Baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
 	}
 
-	var responseURLs []OrShURL
+	var responseURLs []h.OrShURL
 	err := json.Unmarshal(data, &responseURLs)
 	if err != nil {
 		t.Errorf("Failed to unmarshal response data: %v", err)
@@ -440,7 +441,7 @@ func TestLogicGetFuncPing(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := logicGetFuncPing(tc.mockDB)
+			result := h.LogicGetFuncPing(tc.mockDB)
 			log.Println(result)
 			if result != tc.expectedErr {
 				t.Errorf("Expected error code %v, but got %v", tc.expectedErr, result)
@@ -471,7 +472,7 @@ func TestCreateSQLTable(t *testing.T) {
 	mock.ExpectExec("^CREATE TABLE IF NOT EXISTS idshortlongurl\\(shorturl text , longurl text primary key, userid text, deleteurl boolean default false\\)").
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
-	resultDB := CreateSQLTable(db)
+	resultDB := h.CreateSQLTable(db)
 
 	if resultDB != db {
 		t.Errorf("Expected the same DB instance, got a different one")
@@ -499,7 +500,7 @@ func TestAddRecordInTable(t *testing.T) {
 		WithArgs(shortURL, longURL, userID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	rowsAffected := AddRecordInTable(db, shortURL, longURL, userID)
+	rowsAffected := h.AddRecordInTable(db, shortURL, longURL, userID)
 
 	if rowsAffected != 1 {
 		t.Errorf("Expected 1 row affected, got %d", rowsAffected)
@@ -536,7 +537,7 @@ func TestLogicPostFuncAPIShortenBatch(t *testing.T) {
 			}
 			rr := httptest.NewRecorder()
 
-			status, body := logicPostFuncAPIShortenBatch(handMapPost, handMapGet, rr, req)
+			status, body := h.LogicPostFuncAPIShortenBatch(handMapPost, handMapGet, rr, req)
 
 			if status != tc.expectedStatus {
 				t.Errorf("Expected status %d, got %d", tc.expectedStatus, status)
@@ -576,9 +577,9 @@ func TestShortPostAPIShortenBatch(t *testing.T) {
 			inputBytes := []byte(tc.inputJSON)
 			expectedBytes := []byte(tc.expectedJSON)
 
-			outputBytes := shortPostAPIShortenBatch(handMapPost, handMapGet, inputBytes)
+			outputBytes := h.ShortPostAPIShortenBatch(handMapPost, handMapGet, inputBytes)
 
-			var expected, output []LngShrtCrltnID
+			var expected, output []h.LngShrtCrltnID
 			if err := json.Unmarshal(expectedBytes, &expected); err != nil {
 				t.Fatal(err)
 			}
@@ -629,7 +630,7 @@ func TestLogicDeleteFuncAPIUserURLs(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			status := logicDeleteFuncAPIUserURLs(handMapPost, handMapGet, nil, "", req)
+			status := h.LogicDeleteFuncAPIUserURLs(handMapPost, handMapGet, nil, "", req)
 
 			if status != tc.expectedStatus {
 				t.Errorf("Expected status %d, got %d", tc.expectedStatus, status)
@@ -648,6 +649,6 @@ func TestLogicDeleteFuncAPIUserURLs(t *testing.T) {
 
 func BenchmarkRandSeq(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		randSeq(6)
+		h.RandSeq(6)
 	}
 }

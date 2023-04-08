@@ -10,7 +10,7 @@ import (
 // GetFunc Обработчик для Get запросов.
 func GetFunc(handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resLF, out := logicGetFunc(r, handMapGet)
+		resLF, out := LogicGetFunc(r, handMapGet)
 		fmt.Println(out)
 		switch {
 		case resLF == http.StatusTemporaryRedirect:
@@ -28,7 +28,7 @@ func GetFunc(handMapGet map[string]string) func(w http.ResponseWriter, r *http.R
 // PostFunc Обработчик Post запросов.
 func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resFL, byteRes := logicPostFunc(w, r, handMapPost, handMapGet)
+		resFL, byteRes := LogicPostFunc(w, r, handMapPost, handMapGet)
 		switch {
 		case resFL == http.StatusCreated:
 			w.WriteHeader(http.StatusCreated)
@@ -53,7 +53,7 @@ func PostFunc(handMapPost map[string]string, handMapGet map[string]string) func(
 // PostFuncAPIShorten Обработчик Post запросов.
 func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resFL, byteRes := logicPostFuncAPIShorten(handMapPost, handMapGet, w, r)
+		resFL, byteRes := LogicPostFuncAPIShorten(handMapPost, handMapGet, w, r)
 		switch {
 		case resFL == http.StatusCreated:
 			w.WriteHeader(http.StatusCreated)
@@ -78,7 +78,7 @@ func PostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]str
 // GetFuncAPIUserUrls Хэндлер возвращает объект json-array, со всеми длинными и короткими URL которые создал юзер.
 func GetFuncAPIUserUrls(handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resFL, byteRes := logicGetFuncAPIUserUrls(handMapGet, w, r)
+		resFL, byteRes := LogicGetFuncAPIUserUrls(handMapGet, w, r)
 		switch {
 		case resFL == http.StatusNoContent:
 			w.WriteHeader(http.StatusNoContent)
@@ -97,7 +97,7 @@ func GetFuncAPIUserUrls(handMapGet map[string]string) func(w http.ResponseWriter
 // GetFuncPing Хэндлер пинга базы данных.
 func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resFL := logicGetFuncPing(db)
+		resFL := LogicGetFuncPing(db)
 		switch {
 		case resFL == http.StatusOK:
 			w.WriteHeader(http.StatusOK)
@@ -110,7 +110,7 @@ func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
 // PostFuncAPIShortenBatch Хэндлер, принимающий в теле запроса множество URL для сокращения.
 func PostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resFL, byteRes := logicPostFuncAPIShortenBatch(handMapPost, handMapGet, w, r)
+		resFL, byteRes := LogicPostFuncAPIShortenBatch(handMapPost, handMapGet, w, r)
 		switch {
 		case resFL == http.StatusBadRequest:
 			w.WriteHeader(http.StatusBadRequest)
@@ -130,7 +130,7 @@ func PostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[strin
 // DeleteFuncAPIUserURLs Хэндлер, принимающая список идентификаторов сокращённых URL для удаления.
 func DeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, db *sql.DB, dbf string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resFL := logicDeleteFuncAPIUserURLs(handMapPost, handMapGet, db, dbf, r)
+		resFL := LogicDeleteFuncAPIUserURLs(handMapPost, handMapGet, db, dbf, r)
 		switch {
 		case resFL == http.StatusAccepted:
 			w.WriteHeader(http.StatusAccepted)
