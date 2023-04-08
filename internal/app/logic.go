@@ -33,7 +33,7 @@ const (
 	openFileError       = "Open File Error"
 	compressError       = "Compress file"
 	cookieByteReadError = "Cookie Byte Read Error"
-	//Baseurl базовый URL для сервера
+	//Baseurl базовый URL для сервера.
 	Baseurl             = "http://localhost:8080/"
 	errorCreatingTable  = "Error when creating table"
 	errorPrepareContext = "Prepare context Error"
