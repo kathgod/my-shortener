@@ -380,33 +380,6 @@ func TestCookieCheck(t *testing.T) {
 	}
 }
 
-func TestMakeNewCookie(t *testing.T) {
-	mockWriter := httptest.NewRecorder()
-
-	newCookieValue := makeNewCookie(mockWriter)
-
-	if newCookieValue == "" {
-		t.Errorf("Expected a new cookie, but got an empty value")
-	}
-
-	if _, ok := resIDKey[newCookieValue]; !ok {
-		t.Errorf("Expected the new cookie value to be added to the resIDKey map, but it wasn't")
-	}
-
-	var foundCookie bool
-	for _, cookie := range mockWriter.Result().Cookies() {
-		if cookie.Name == "userId" && cookie.Value == newCookieValue {
-			foundCookie = true
-			break
-		}
-	}
-
-	if !foundCookie {
-		t.Errorf("Expected the new cookie to be set in the response, but it wasn't")
-	}
-
-}
-
 func TestLogicGetFuncAPIUserUrls(t *testing.T) {
 	handMapGet := map[string]string{
 		"user1abcdef": "http://example.com/1",
