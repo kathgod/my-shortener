@@ -394,7 +394,7 @@ func TestMakeNewCookie(t *testing.T) {
 	}
 
 	cookies := mockWriter.Result().Cookies()
-	defer mockWriter.Result().Body.Close()
+
 	var foundCookie bool
 	for _, cookie := range cookies {
 		if cookie.Name == "userId" && cookie.Value == newCookieValue {
@@ -406,6 +406,7 @@ func TestMakeNewCookie(t *testing.T) {
 	if !foundCookie {
 		t.Errorf("Expected the new cookie to be set in the response, but it wasn't")
 	}
+	mockWriter.Result().Body.Close()
 }
 
 func TestLogicGetFuncAPIUserUrls(t *testing.T) {
