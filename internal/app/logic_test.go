@@ -382,7 +382,6 @@ func TestCookieCheck(t *testing.T) {
 
 func TestMakeNewCookie(t *testing.T) {
 	mockWriter := httptest.NewRecorder()
-	defer mockWriter.Result().Body.Close()
 
 	newCookieValue := makeNewCookie(mockWriter)
 
@@ -394,10 +393,8 @@ func TestMakeNewCookie(t *testing.T) {
 		t.Errorf("Expected the new cookie value to be added to the resIDKey map, but it wasn't")
 	}
 
-	cookies := mockWriter.Result().Cookies()
-
 	var foundCookie bool
-	for _, cookie := range cookies {
+	for _, cookie := range mockWriter.Result().Cookies() {
 		if cookie.Name == "userId" && cookie.Value == newCookieValue {
 			foundCookie = true
 			break
