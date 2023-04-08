@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
 	"log"
 	"math/rand"
@@ -400,7 +401,7 @@ func TestLogicGetFuncAPIUserUrls(t *testing.T) {
 	}
 
 	baseurl := "http://localhost:8080/"
-	
+
 	expectedURLs1 := []h.OrShURL{
 		{ShortURL: baseurl + "user1abcdef", OriginalURL: "http://example.com/1"},
 		{ShortURL: baseurl + "user1bbcdef", OriginalURL: "http://example.com/2"},
@@ -652,5 +653,38 @@ func TestLogicDeleteFuncAPIUserURLs(t *testing.T) {
 func BenchmarkRandSeq(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		h.RandSeq(6)
+	}
+}
+
+func BenchmarkPostFunc(b *testing.B) {
+	handMapPost := map[string]string{}
+	handMapGet := map[string]string{}
+	for i := 0; i < b.N; i++ {
+		originalURL := h.RandSeq(10)
+		req, err := http.NewRequest("POST", "http://localhost:8080/", strings.NewReader(originalURL))
+		if err != nil {
+			log.Println(err)
+		}
+		nr := httptest.NewRecorder()
+
+		status, _ := h.LogicPostFunc(nr, req, handMapPost, handMapGet)
+		log.Println(status, handMapGet[originalURL])
+
+	}
+}
+
+func BenchmarkGetFunc(b *testing.B) {
+	handMapGet := map[string]string{}
+	for i := 0; i < b.N; i++ {
+		shortURL := h.RandSeq(6)
+		originalURL := h.RandSeq(10)
+		handMapGet[shortURL] = originalURL
+		reqURL := "http://localhost:8080/" + shortURL
+		req1, err := http.NewRequest("GET", reqURL, nil)
+		if err != nil {
+			log.Println(err)
+		}
+		status1, _ := h.LogicGetFunc(req1, handMapGet)
+		fmt.Println(status1)
 	}
 }

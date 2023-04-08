@@ -21,7 +21,7 @@ func ExampleGetFunc() {
 	status1, _ := h.LogicGetFunc(req1, handMapGet)
 	fmt.Println(status1)
 
-	req2, err := http.NewRequest("GET", "shortURLnotExist", nil)
+	req2, err := http.NewRequest("GET", "shortURLNotExist", nil)
 	if err != nil {
 		log.Println(err)
 	}
