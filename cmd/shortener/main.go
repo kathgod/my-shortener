@@ -3,14 +3,17 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"github.com/go-chi/chi/v5"
-	_ "github.com/lib/pq"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/http/pprof"
 	"reflect"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	_ "github.com/lib/pq"
+
 	MyHandler "urlshortener/internal/app"
 )
 
@@ -26,6 +29,12 @@ var (
 	datadbaseDsn *string
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
+
 func init() {
 	srvAddress = flag.String("a", "localhost:8080", "SERVER_ADDRESS")
 	bsURL = flag.String("b", "http://localhost:8080", "BASE_URL")
@@ -35,6 +44,10 @@ func init() {
 
 func main() {
 	flag.Parse()
+
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
 
 	portNumber := MyHandler.HandParam("SERVER_ADDRESS", srvAddress)
 	MyHandler.ResHandParam.BU = MyHandler.HandParam("BASE_URL", bsURL)
@@ -97,9 +110,8 @@ func main() {
 		rtr.Delete("/api/user/urls", resDAUU)
 	}
 
-	err2 := http.ListenAndServe(portNumber, rtr)
-	if err2 != nil {
+	err := http.ListenAndServe(portNumber, rtr)
+	if err != nil {
 		log.Println(srError)
 	}
-
 }

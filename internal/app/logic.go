@@ -12,7 +12,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	_ "github.com/lib/pq"
 	"io"
 	"log"
 	"math/rand"
@@ -20,9 +19,9 @@ import (
 	"os"
 	"strings"
 	"sync"
-
-	//"sync"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 const (

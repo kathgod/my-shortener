@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/DATA-DOG/go-sqlmock"
 	"log"
 	"math/rand"
 	"net/http"
@@ -17,6 +16,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/lib/pq"
 	h "urlshortener/internal/app"
 )

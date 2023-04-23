@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+
 	h "urlshortener/internal/app"
 )
 
@@ -26,8 +27,7 @@ func ExampleGetFunc() {
 		log.Println(err)
 	}
 
-	status2, _ := h.LogicGetFunc(req2, handMapGet)
-	fmt.Println(status2)
+	_, _ = h.LogicGetFunc(req2, handMapGet)
 }
 
 // Output:
