@@ -7,6 +7,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// ExitInMainAnalyzer переменная типа nalysis.Analyzer, нужна для реализации анализатора вызова os.Exit в функции main() пакета main
 var ExitInMainAnalyzer = &analysis.Analyzer{
 	Name: "NoOsExitInMain",
 	Doc:  "os.Exit() in main function",
