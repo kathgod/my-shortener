@@ -16,9 +16,10 @@ import (
 	"strings"
 	"testing"
 
+	h "urlshortener/internal/app"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/lib/pq"
-	h "urlshortener/internal/app"
 )
 
 func TestLogicGetFunc(t *testing.T) {
@@ -573,7 +574,8 @@ func TestShortPostAPIShortenBatch(t *testing.T) {
 		},
 	}
 
-	rand.Seed(1)
+	//rand.Seed(1)
+	rand.New(rand.NewSource(1))
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
+	mr "math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -55,7 +55,7 @@ var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 func RandSeq(n int) string {
 	b := make([]rune, n)
 	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
+		b[i] = letters[mr.Intn(len(letters))]
 	}
 	return string(b)
 }
@@ -96,7 +96,6 @@ func LogicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
 	} else {
 		return http.StatusBadRequest, ""
 	}
-
 }
 
 // LogicPostFunc Функция логики хендлера PostFunc.
@@ -294,7 +293,6 @@ func Recovery(handMapPost map[string]string, handMapGet map[string]string, file 
 		handMapPost[strings.Replace(string(data1), "@", "", -1)] = strings.Replace(string(data2), "\n", "", -1)
 		handMapGet[strings.Replace(string(data2), "\n", "", -1)] = strings.Replace(string(data1), "@", "", -1)
 	}
-
 }
 
 // HandParam Функция обработки флагов.
@@ -312,6 +310,7 @@ func HandParam(name string, flg *string) string {
 		res = res + "/"
 	case "FILE_STORAGE_PATH":
 	case "DATABASE_DSN":
+	case "ENABLE_HTTPS":
 	}
 	return res
 }
@@ -563,7 +562,6 @@ func ShortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[stri
 		log.Print(errMarshal)
 	}
 	return buff
-
 }
 
 // LogicDeleteFuncAPIUserURLs Функция логики для хендлера DeleteFuncAPIUserURLs.

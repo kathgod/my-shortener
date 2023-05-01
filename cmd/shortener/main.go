@@ -27,6 +27,7 @@ var (
 	bsURL        *string
 	flStoragePth *string
 	datadbaseDsn *string
+	enableHTTPS  *string
 )
 
 var (
@@ -40,6 +41,7 @@ func init() {
 	bsURL = flag.String("b", "http://localhost:8080", "BASE_URL")
 	flStoragePth = flag.String("f", "", "FILE_STORAGE_PATH")
 	datadbaseDsn = flag.String("d", "", "DATABASE_DSN")
+	enableHTTPS = flag.String("s", "", "ENABLE_HTTPS")
 }
 
 func main() {
@@ -53,6 +55,7 @@ func main() {
 	MyHandler.ResHandParam.BU = MyHandler.HandParam("BASE_URL", bsURL)
 	MyHandler.ResHandParam.FSP = MyHandler.HandParam("FILE_STORAGE_PATH", flStoragePth)
 	MyHandler.ResHandParam.DBD = MyHandler.HandParam("DATABASE_DSN", datadbaseDsn)
+	eHTTPS := MyHandler.HandParam("ENABLE_HTTPS", enableHTTPS)
 
 	mapPost := make(map[string]string)
 	mapGet := make(map[string]string)
@@ -110,8 +113,16 @@ func main() {
 		rtr.Delete("/api/user/urls", resDAUU)
 	}
 
-	err := http.ListenAndServe(portNumber, rtr)
-	if err != nil {
-		log.Println(srError)
+	if eHTTPS == "" {
+		err := http.ListenAndServe(portNumber, rtr)
+		if err != nil {
+			log.Println(srError)
+		}
+	} else {
+		err := http.ListenAndServeTLS(portNumber, "../../internal/transport/server.cert", "../../internal/transport/server.key", rtr)
+		if err != nil {
+			log.Println(srError)
+		}
 	}
+
 }
