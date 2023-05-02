@@ -69,6 +69,8 @@ func main() {
 	config := MyHandler.HandParam("CONFIG", configFile)
 	MyHandler.HandConfigParam(config)
 
+	log.Println(MyHandler.ResHandParam)
+
 	mapPost := make(map[string]string)
 	mapGet := make(map[string]string)
 
