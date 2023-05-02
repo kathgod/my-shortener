@@ -126,11 +126,13 @@ func main() {
 	}
 
 	if !MyHandler.ResHandParam.EnableHTTPS {
+		log.Println("1")
 		err := http.ListenAndServe(MyHandler.ResHandParam.PortNumber, rtr)
 		if err != nil {
 			log.Println(srError)
 		}
 	} else {
+		log.Println("2")
 		err := http.ListenAndServeTLS(MyHandler.ResHandParam.PortNumber, "../../internal/transport/server.cert", "../../internal/transport/server.key", rtr)
 		if err != nil {
 			log.Println(srError)
