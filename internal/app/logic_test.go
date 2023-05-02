@@ -110,7 +110,7 @@ func TestShortPostFunc(t *testing.T) {
 		wantError  int64
 		wantPrefix string
 	}{
-		{"Test valid input", []byte("test data"), "123456", -1, h.ResHandParam.BU},
+		{"Test valid input", []byte("test data"), "123456", -1, h.ResHandParam.BaseURL},
 	}
 
 	for _, test := range tests {
@@ -574,7 +574,6 @@ func TestShortPostAPIShortenBatch(t *testing.T) {
 		},
 	}
 
-	//rand.Seed(1)
 	rand.New(rand.NewSource(1))
 
 	for _, tc := range testCases {

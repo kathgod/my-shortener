@@ -42,13 +42,6 @@ const (
 	errMarshal          = "Error when Marshal json"
 )
 
-// ResHandParam Структура для предобработки флагов и переменных.
-var ResHandParam struct {
-	BU  string
-	FSP string
-	DBD string
-}
-
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 // RandSeq Функция для формирования случайной поледовательности.
@@ -62,7 +55,7 @@ func RandSeq(n int) string {
 
 // LogicGetFunc Функция логики хендлера GetFunc.
 func LogicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
-	fileStoragePath := ResHandParam.FSP
+	fileStoragePath := ResHandParam.FileStoragePath
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
 		log.Println(openFileError)
@@ -133,7 +126,7 @@ func LogicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 
 // ShortPostFunc Функуция сокращения URL для PostFunc.
 func ShortPostFunc(handMapPost map[string]string, handMapGet map[string]string, bp []byte, cckValue string) (string, int64) {
-	fileStoragePath := ResHandParam.FSP
+	fileStoragePath := ResHandParam.FileStoragePath
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
 		log.Println(openFileError)
@@ -153,7 +146,7 @@ func ShortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 			Recovery(handMapPost, handMapGet, storageFile)
 		}
 	}
-	baseURL := ResHandParam.BU
+	baseURL := ResHandParam.BaseURL
 	rndRes := RandSeq(6) + cckValue
 	for {
 		if handMapGet[string(bp)] != "" {
@@ -166,7 +159,7 @@ func ShortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 	resultPost := baseURL + rndRes
 
 	var sqlError int64 = -1
-	if ResHandParam.DBD != "" {
+	if ResHandParam.DataBaseDSN != "" {
 		sqlError = AddRecordInTable(ResCreateSQLTable, resultPost, string(bp), cckValue)
 		log.Println(sqlError)
 	}
@@ -212,7 +205,7 @@ func LogicPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 
 // ShortPostFuncAPIShorten Функция сокращения URL для PostFuncAPIShorten.
 func ShortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[string]string, rawBsp []byte) ([]byte, int64) {
-	fileStoragePath := ResHandParam.FSP
+	fileStoragePath := ResHandParam.FileStoragePath
 	storageFile, fileError := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if fileError != nil {
 		log.Println(openFileError)
@@ -233,7 +226,7 @@ func ShortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 		}
 	}
 
-	baseURL := ResHandParam.BU
+	baseURL := ResHandParam.BaseURL
 	urlStruct := URLLongAndShort{}
 	if err := json.Unmarshal(rawBsp, &urlStruct); err != nil {
 		log.Println(postBodyError)
@@ -249,7 +242,7 @@ func ShortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 
 	urlStruct.ShortURL = baseURL + rndRes
 	var sqlErr int64 = -1
-	if ResHandParam.DBD != "" {
+	if ResHandParam.DataBaseDSN != "" {
 		sqlErr = AddRecordInTable(ResCreateSQLTable, urlStruct.ShortURL, urlStruct.OriginalURL, "default")
 		log.Println(sqlErr)
 	}
@@ -295,9 +288,24 @@ func Recovery(handMapPost map[string]string, handMapGet map[string]string, file 
 	}
 }
 
+// .
+type MyType interface{}
+
+// FlagParam Структура для предобработки флагов и переменных.
+type FlagParam struct {
+	PortNumber      string `json:"server_address"`
+	BaseURL         string `json:"base_url"`
+	FileStoragePath string `json:"file_storage_path"`
+	DataBaseDSN     string `json:"database_dsn,omitempty"`
+	EnableHTTPS     bool   `json:"enable_https"`
+}
+
+// ResHandParam Структура для предобработки флагов и переменных.
+var ResHandParam FlagParam
+
 // HandParam Функция обработки флагов.
 func HandParam(name string, flg *string) string {
-	res := ""
+	var res string
 	globEnv := os.Getenv(name)
 	if globEnv != "" {
 		res = globEnv
@@ -306,13 +314,61 @@ func HandParam(name string, flg *string) string {
 	}
 	switch name {
 	case "SERVER_ADDRESS":
-	case "BASE_URL":
-		res = res + "/"
 	case "FILE_STORAGE_PATH":
 	case "DATABASE_DSN":
+	case "BASE_URL":
+		res = res + "/"
 	case "ENABLE_HTTPS":
+	case "CONFIG":
 	}
 	return res
+}
+
+// HandConfigParam Функция обработки параметра для флага конфиг.
+func HandConfigParam(res string) {
+
+	var buff FlagParam
+
+	content, err := os.ReadFile(res)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(content, &buff)
+	if err != nil {
+		log.Println(err)
+	}
+
+	if ResHandParam.PortNumber == "localhost:8080" {
+		if buff.PortNumber != "" {
+			ResHandParam.PortNumber = buff.PortNumber
+		}
+	}
+
+	if ResHandParam.BaseURL == "http://localhost:8080" {
+		if buff.BaseURL != "" {
+			ResHandParam.BaseURL = buff.BaseURL
+		}
+	}
+
+	if ResHandParam.FileStoragePath == "" {
+		if buff.FileStoragePath != "" {
+			ResHandParam.FileStoragePath = buff.FileStoragePath
+		}
+	}
+
+	if ResHandParam.DataBaseDSN == "" {
+		if buff.DataBaseDSN != "" {
+			ResHandParam.DataBaseDSN = buff.DataBaseDSN
+		}
+	}
+
+	if !ResHandParam.EnableHTTPS {
+		if buff.EnableHTTPS {
+			ResHandParam.EnableHTTPS = buff.EnableHTTPS
+		}
+	}
+
 }
 
 // Decompress Функция декомпресии тела запроса.
@@ -457,7 +513,7 @@ func LogicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter
 
 // LogicGetFuncPing Функция логики для хендлера GetFuncPing.
 func LogicGetFuncPing(db *sql.DB) int {
-	log.Println("In func", ResHandParam.DBD)
+	log.Println("In func", ResHandParam.DataBaseDSN)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	if err := db.PingContext(ctx); err != nil {
