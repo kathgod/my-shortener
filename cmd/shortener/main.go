@@ -53,6 +53,7 @@ func main() {
 	fmt.Printf("Build version: %s\n", buildVersion)
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
+	log.Println("Начало тестирования")
 
 	MyHandler.ResHandParam.PortNumber = MyHandler.HandParam("SERVER_ADDRESS", srvAddress)
 	MyHandler.ResHandParam.BaseURL = MyHandler.HandParam("BASE_URL", bsURL)
