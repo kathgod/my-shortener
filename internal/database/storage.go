@@ -14,6 +14,7 @@ const (
 // OpenDB Функция открытия базы данных.
 func OpenDB(DBDSN string) *sql.DB {
 	db, errDB := sql.Open("postgres", DBDSN)
+	log.Println(DBDSN)
 	if errDB != nil {
 		log.Println(dbOpenError)
 		log.Println(errDB)
