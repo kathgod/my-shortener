@@ -20,7 +20,6 @@ import (
 
 	lgc "urlshortener/internal/logic"
 
-	//"github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/lib/pq"
 )
 
@@ -556,9 +555,31 @@ func TestCreateSQLTable(t *testing.T) {
 	}
 }
 
-/*func TestAddRecordInTable(t *testing.T) {
-
-}*/
+func TestAddRecordInTable(t *testing.T) {
+	test := []struct {
+		name     string
+		DBDSN    string
+		shortURL string
+		longURL  string
+		userID   string
+		exresult int
+	}{
+		{
+			name:     "Negative Test",
+			DBDSN:    "user=postgres password=123 dbname=test host=localhost sslmode=disable",
+			shortURL: "abc",
+			longURL:  "http://example.com",
+			userID:   "123",
+			exresult: 0,
+		},
+	}
+	for _, tc := range test {
+		result := lgc.AddRecordInTable(tc.DBDSN, tc.shortURL, tc.longURL, tc.userID)
+		if result != int64(tc.exresult) {
+			t.Errorf("Expected rows affected: %d, but got: %d", tc.exresult, result)
+		}
+	}
+}
 
 func TestLogicPostFuncAPIShortenBatch(t *testing.T) {
 	handMapPost := make(map[string]string)

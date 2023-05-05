@@ -512,7 +512,11 @@ func LogicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter
 
 // LogicGetFuncPing Функция логики для хендлера GetFuncPing.
 func LogicGetFuncPing(DBDSN string) int {
-	db := MyStorage.OpenDB(DBDSN)
+	db, err := MyStorage.OpenDB(DBDSN)
+	if err != nil {
+		log.Println(err)
+		return http.StatusInternalServerError
+	}
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
@@ -531,7 +535,11 @@ func LogicGetFuncPing(DBDSN string) int {
 
 // CreateSQLTable Функция создания SQL таблиц.
 func CreateSQLTable(DBDSN string) *sql.DB {
-	db := MyStorage.OpenDB(DBDSN)
+	db, err := MyStorage.OpenDB(DBDSN)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
@@ -560,7 +568,11 @@ var ResCreateSQLTable *sql.DB
 
 // AddRecordInTable Функция записи в SQL таблицу.
 func AddRecordInTable(DBDSN string, shortURL string, longURL string, userID string) int64 {
-	db := MyStorage.OpenDB(DBDSN)
+	db, err := MyStorage.OpenDB(DBDSN)
+	if err != nil {
+		log.Println(err)
+		return 0
+	}
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
@@ -574,6 +586,7 @@ func AddRecordInTable(DBDSN string, shortURL string, longURL string, userID stri
 	if err != nil {
 		log.Println(errorPrepareContext)
 		log.Println(err)
+		return 0
 	}
 	defer func(stmt *sql.Stmt) {
 		err := stmt.Close()
@@ -584,10 +597,12 @@ func AddRecordInTable(DBDSN string, shortURL string, longURL string, userID stri
 	res, err1 := stmt.ExecContext(ctx, shortURL, longURL, userID)
 	if err1 != nil {
 		log.Println(errInsert)
+		return 0
 	}
 	rows, err2 := res.RowsAffected()
 	if err2 != nil {
 		log.Println(findingRowAffected)
+		return 0
 	}
 	log.Printf("%d rows created AddRecordInTable", rows)
 	return rows
@@ -643,7 +658,11 @@ func ShortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[stri
 
 // LogicDeleteFuncAPIUserURLs Функция логики для хендлера DeleteFuncAPIUserURLs.
 func LogicDeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, dbf string, r *http.Request) int {
-	db := MyStorage.OpenDB(dbf)
+	db, err := MyStorage.OpenDB(dbf)
+	if err != nil {
+		log.Println(err)
+		return http.StatusBadRequest
+	}
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {

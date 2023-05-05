@@ -7,8 +7,8 @@ import (
 
 func TestOpenDB(t *testing.T) {
 	dsn := "postgres://user:password@localhost:5432/dbname?sslmode=disable"
-	db := st.OpenDB(dsn)
-	if db == nil {
+	db, err := st.OpenDB(dsn)
+	if (db == nil) || (err != nil) {
 		t.Error("expected non-nil db, got nil")
 	}
 	defer func() {

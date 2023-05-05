@@ -1,7 +1,6 @@
 module urlshortener
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/gordonklaus/ineffassign v0.0.0-20230107090616-13ace0543b28
 	github.com/kisielk/errcheck v1.6.3
