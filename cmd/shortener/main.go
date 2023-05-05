@@ -110,18 +110,13 @@ func main() {
 
 	if MyLogic.ResHandParam.DataBaseDSN != "" {
 		db := MyStorage.OpenDB(MyLogic.ResHandParam.DataBaseDSN)
-		defer func(db *sql.DB) {
-			err := db.Close()
-			if err != nil {
-				log.Println(err)
-			}
-		}(db)
+		log.Println("Point 1")
 		resGP := MyHandler.GetFuncPing(db)
 		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, db, MyLogic.ResHandParam.DataBaseDSN)
-
+		log.Println("Point 2")
 		rtr.Get("/ping", resGP)
 		rtr.Delete("/api/user/urls", resDAUU)
-
+		log.Println("Point 3")
 		MyLogic.ResCreateSQLTable = MyLogic.CreateSQLTable(db)
 		log.Println(reflect.TypeOf(MyLogic.ResCreateSQLTable))
 	} else {
