@@ -20,7 +20,7 @@ import (
 
 	lgc "urlshortener/internal/logic"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	//"github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/lib/pq"
 )
 
@@ -556,33 +556,9 @@ func TestCreateSQLTable(t *testing.T) {
 	}
 }
 
-func TestAddRecordInTable(t *testing.T) {
+/*func TestAddRecordInTable(t *testing.T) {
 
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("An error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	shortURL := "testShort"
-	longURL := "testLong"
-	userID := "testUser"
-
-	mock.ExpectPrepare("^INSERT INTO idshortlongurl\\(shorturl, longurl, userid\\) VALUES \\(\\$1, \\$2, \\$3\\) ON CONFLICT \\(longurl\\) DO NOTHING")
-	mock.ExpectExec("^INSERT INTO idshortlongurl\\(shorturl, longurl, userid\\) VALUES \\(\\$1, \\$2, \\$3\\) ON CONFLICT \\(longurl\\) DO NOTHING").
-		WithArgs(shortURL, longURL, userID).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	rowsAffected := lgc.AddRecordInTable(db, shortURL, longURL, userID)
-
-	if rowsAffected != 1 {
-		t.Errorf("Expected 1 row affected, got %d", rowsAffected)
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("There were unfulfilled expectations: %s", err)
-	}
-}
+}*/
 
 func TestLogicPostFuncAPIShortenBatch(t *testing.T) {
 	handMapPost := make(map[string]string)

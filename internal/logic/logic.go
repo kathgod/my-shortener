@@ -94,13 +94,11 @@ func LogicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
 
 // LogicPostFunc Функция логики хендлера PostFunc.
 func LogicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[string]string, handMapGet map[string]string) (int, []byte) {
-	log.Println("Point 1")
 	bp, err := Decompress(io.ReadAll(r.Body))
 	if err != nil {
 		log.Println(postBodyError)
 		return http.StatusBadRequest, nil
 	}
-	log.Println("Point 2")
 	cck, errCck := r.Cookie("userId")
 	cckValue := ""
 	if errCck != nil {
@@ -109,7 +107,6 @@ func LogicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 	} else {
 		cckValue = cck.Value
 	}
-	log.Println("Point 3")
 	log.Println("cckValue in PostFunc:", cckValue)
 	resultPost, sqlError := ShortPostFunc(handMapPost, handMapGet, bp, cckValue)
 	byteResultPost := []byte(resultPost)
@@ -120,7 +117,6 @@ func LogicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 		}
 		w.Header().Set("Accept-Encoding", "gzip")
 	}
-	log.Println("Point 4")
 	if sqlError != 0 {
 		return http.StatusCreated, byteResultPost
 	} else {
@@ -164,7 +160,7 @@ func ShortPostFunc(handMapPost map[string]string, handMapGet map[string]string, 
 
 	var sqlError int64 = -1
 	if ResHandParam.DataBaseDSN != "" {
-		sqlError = AddRecordInTable(ResCreateSQLTable, resultPost, string(bp), cckValue)
+		sqlError = AddRecordInTable(ResHandParam.DataBaseDSN, resultPost, string(bp), cckValue)
 		log.Println(sqlError)
 	}
 	if sqlError != 0 {
@@ -247,7 +243,7 @@ func ShortPostFuncAPIShorten(handMapPost map[string]string, handMapGet map[strin
 	urlStruct.ShortURL = baseURL + rndRes
 	var sqlErr int64 = -1
 	if ResHandParam.DataBaseDSN != "" {
-		sqlErr = AddRecordInTable(ResCreateSQLTable, urlStruct.ShortURL, urlStruct.OriginalURL, "default")
+		sqlErr = AddRecordInTable(ResHandParam.DataBaseDSN, urlStruct.ShortURL, urlStruct.OriginalURL, "default")
 		log.Println(sqlErr)
 	}
 	var shURLByteFormat []byte
@@ -563,7 +559,14 @@ func CreateSQLTable(DBDSN string) *sql.DB {
 var ResCreateSQLTable *sql.DB
 
 // AddRecordInTable Функция записи в SQL таблицу.
-func AddRecordInTable(db *sql.DB, shortURL string, longURL string, userID string) int64 {
+func AddRecordInTable(DBDSN string, shortURL string, longURL string, userID string) int64 {
+	db := MyStorage.OpenDB(DBDSN)
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(db)
 	query := `INSERT INTO idshortlongurl(shorturl, longurl, userid) VALUES ($1, $2, $3) ON CONFLICT (longurl) DO NOTHING`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
