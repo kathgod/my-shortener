@@ -52,9 +52,6 @@ func init() {
 }
 
 func main() {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-
 	flag.Parse()
 
 	fmt.Printf("Build version: %s\n", buildVersion)
@@ -139,6 +136,9 @@ func main() {
 			log.Println(srError)
 		}
 	}
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
 	<-sigChan
 	log.Println("Received signal")
