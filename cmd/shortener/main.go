@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"log"
@@ -19,7 +18,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	MyHandler "urlshortener/internal/app"
-	MyStorage "urlshortener/internal/database"
 	MyLogic "urlshortener/internal/logic"
 )
 
@@ -109,19 +107,16 @@ func main() {
 	rtr.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	if MyLogic.ResHandParam.DataBaseDSN != "" {
-		db := MyStorage.OpenDB(MyLogic.ResHandParam.DataBaseDSN)
-		log.Println("Point 1")
-		resGP := MyHandler.GetFuncPing(db)
-		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, db, MyLogic.ResHandParam.DataBaseDSN)
-		log.Println("Point 2")
+
+		resGP := MyHandler.GetFuncPing(MyLogic.ResHandParam.DataBaseDSN)
+		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, MyLogic.ResHandParam.DataBaseDSN)
 		rtr.Get("/ping", resGP)
 		rtr.Delete("/api/user/urls", resDAUU)
-		log.Println("Point 3")
-		MyLogic.ResCreateSQLTable = MyLogic.CreateSQLTable(db)
+
+		MyLogic.ResCreateSQLTable = MyLogic.CreateSQLTable(MyLogic.ResHandParam.DataBaseDSN)
 		log.Println(reflect.TypeOf(MyLogic.ResCreateSQLTable))
 	} else {
-		var db *sql.DB
-		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, db, MyLogic.ResHandParam.DataBaseDSN)
+		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, MyLogic.ResHandParam.DataBaseDSN)
 		rtr.Delete("/api/user/urls", resDAUU)
 	}
 

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -101,9 +100,9 @@ func GetFuncAPIUserUrls(handMapGet map[string]string) func(w http.ResponseWriter
 }
 
 // GetFuncPing Хэндлер пинга базы данных.
-func GetFuncPing(db *sql.DB) func(w http.ResponseWriter, r *http.Request) {
+func GetFuncPing(DBDSN string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resFL := lgc.LogicGetFuncPing(db)
+		resFL := lgc.LogicGetFuncPing(DBDSN)
 		switch {
 		case resFL == http.StatusOK:
 			w.WriteHeader(http.StatusOK)
@@ -134,9 +133,9 @@ func PostFuncAPIShortenBatch(handMapPost map[string]string, handMapGet map[strin
 }
 
 // DeleteFuncAPIUserURLs Хэндлер, принимающая список идентификаторов сокращённых URL для удаления.
-func DeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, db *sql.DB, dbf string) func(w http.ResponseWriter, r *http.Request) {
+func DeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, dbf string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resFL := lgc.LogicDeleteFuncAPIUserURLs(handMapPost, handMapGet, db, dbf, r)
+		resFL := lgc.LogicDeleteFuncAPIUserURLs(handMapPost, handMapGet, dbf, r)
 		switch {
 		case resFL == http.StatusAccepted:
 			w.WriteHeader(http.StatusAccepted)

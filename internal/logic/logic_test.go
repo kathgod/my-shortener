@@ -516,64 +516,43 @@ func TestLogicGetFuncAPIUserUrls(t *testing.T) {
 }
 
 func TestLogicGetFuncPing(t *testing.T) {
-	testCases := []struct {
-		name        string
-		mockDB      *sql.DB
-		expectedErr int
+	tests := []struct {
+		name   string
+		DBDSN  string
+		result int
 	}{
 		{
-			name:        "success",
-			mockDB:      mockDBSuccess(),
-			expectedErr: http.StatusOK,
-		},
-		{
-			name:        "failure",
-			mockDB:      mockDBFailure(),
-			expectedErr: http.StatusInternalServerError,
+			name:   "Negative test",
+			DBDSN:  "user=postgres password=password host=invalidhost dbname=test port=5432 sslmode=disable",
+			result: http.StatusInternalServerError,
 		},
 	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := lgc.LogicGetFuncPing(tc.mockDB)
-			log.Println(result)
-			if result != tc.expectedErr {
-				t.Errorf("Expected error code %v, but got %v", tc.expectedErr, result)
-			}
-		})
+	for _, tc := range tests {
+		res := lgc.LogicGetFuncPing(tc.DBDSN)
+		if res != tc.result {
+			t.Errorf("Expected %v, but got %v", tc.result, res)
+		}
 	}
-}
 
-func mockDBSuccess() *sql.DB {
-	db, mock, _ := sqlmock.New(sqlmock.MonitorPingsOption(true))
-	mock.ExpectPing()
-	return db
-}
-
-func mockDBFailure() *sql.DB {
-	db, mock, _ := sqlmock.New(sqlmock.MonitorPingsOption(true))
-	mock.ExpectPing().WillReturnError(errors.New("ping error"))
-	return db
 }
 
 func TestCreateSQLTable(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("An error '%s' was not expected when opening a stub database connection", err)
+	tests := []struct {
+		name   string
+		DBDSN  string
+		result *sql.DB
+	}{
+		{
+			name:   "Negative test",
+			DBDSN:  "user=postgres password=password host=invalidhost dbname=test port=5432 sslmode=disable",
+			result: nil,
+		},
 	}
-	defer db.Close()
-
-	mock.ExpectExec("^CREATE TABLE IF NOT EXISTS idshortlongurl\\(shorturl text , longurl text primary key, userid text, deleteurl boolean default false\\)").
-		WillReturnResult(sqlmock.NewResult(0, 0))
-
-	resultDB := lgc.CreateSQLTable(db)
-
-	if resultDB != db {
-		t.Errorf("Expected the same DB instance, got a different one")
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("There were unfulfilled expectations: %s", err)
+	for _, tc := range tests {
+		res := lgc.CreateSQLTable(tc.DBDSN)
+		if res != tc.result {
+			t.Errorf("Expected nil, but got another")
+		}
 	}
 }
 
@@ -724,13 +703,12 @@ func TestLogicDeleteFuncAPIUserURLs(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			status := lgc.LogicDeleteFuncAPIUserURLs(handMapPost, handMapGet, nil, "", req)
+			status := lgc.LogicDeleteFuncAPIUserURLs(handMapPost, handMapGet, "", req)
 
 			if status != tc.expectedStatus {
 				t.Errorf("Expected status %d, got %d", tc.expectedStatus, status)
 			}
 
-			// Check if the URL was deleted from the maps
 			if handMapGet["abc123"] != "DELETE" {
 				t.Errorf("Expected handMapGet[\"abc123\"] to be \"DELETE\", got %s", handMapGet["abc123"])
 			}

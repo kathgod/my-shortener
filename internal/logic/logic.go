@@ -22,6 +22,8 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+
+	MyStorage "urlshortener/internal/database"
 )
 
 const (
@@ -510,7 +512,14 @@ func LogicGetFuncAPIUserUrls(handMapGet map[string]string, w http.ResponseWriter
 }
 
 // LogicGetFuncPing Функция логики для хендлера GetFuncPing.
-func LogicGetFuncPing(db *sql.DB) int {
+func LogicGetFuncPing(DBDSN string) int {
+	db := MyStorage.OpenDB(DBDSN)
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(db)
 	log.Println("In func", ResHandParam.DataBaseDSN)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
@@ -522,7 +531,14 @@ func LogicGetFuncPing(db *sql.DB) int {
 }
 
 // CreateSQLTable Функция создания SQL таблиц.
-func CreateSQLTable(db *sql.DB) *sql.DB {
+func CreateSQLTable(DBDSN string) *sql.DB {
+	db := MyStorage.OpenDB(DBDSN)
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(db)
 	query := `CREATE TABLE IF NOT EXISTS idshortlongurl(shorturl text , longurl text primary key, userid text, deleteurl boolean default false)`
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelfunc()
@@ -530,6 +546,7 @@ func CreateSQLTable(db *sql.DB) *sql.DB {
 	if err != nil {
 		log.Println(errorCreatingTable)
 		log.Println(err)
+		return nil
 	}
 	rows, err2 := res.RowsAffected()
 	if err2 != nil {
@@ -619,7 +636,14 @@ func ShortPostAPIShortenBatch(handMapPost map[string]string, handMapGet map[stri
 }
 
 // LogicDeleteFuncAPIUserURLs Функция логики для хендлера DeleteFuncAPIUserURLs.
-func LogicDeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, db *sql.DB, dbf string, r *http.Request) int {
+func LogicDeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]string, dbf string, r *http.Request) int {
+	db := MyStorage.OpenDB(dbf)
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(db)
 	var m sync.Mutex
 	m.Lock()
 	defer m.Unlock()
