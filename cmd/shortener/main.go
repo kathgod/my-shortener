@@ -110,6 +110,12 @@ func main() {
 
 	if MyLogic.ResHandParam.DataBaseDSN != "" {
 		db := MyStorage.OpenDB(MyLogic.ResHandParam.DataBaseDSN)
+		defer func(db *sql.DB) {
+			err := db.Close()
+			if err != nil {
+				log.Println(err)
+			}
+		}(db)
 		resGP := MyHandler.GetFuncPing(db)
 		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, db, MyLogic.ResHandParam.DataBaseDSN)
 
