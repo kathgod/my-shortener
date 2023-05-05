@@ -1,4 +1,4 @@
-package handler_test
+package handler
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	h "urlshortener/internal/app"
+	lgc "urlshortener/internal/logic"
 )
 
 func ExampleGetFunc() {
@@ -19,7 +19,7 @@ func ExampleGetFunc() {
 		log.Println(err)
 	}
 
-	status1, _ := h.LogicGetFunc(req1, handMapGet)
+	status1, _ := lgc.LogicGetFunc(req1, handMapGet)
 	fmt.Println(status1)
 
 	req2, err := http.NewRequest("GET", "shortURLNotExist", nil)
@@ -27,7 +27,7 @@ func ExampleGetFunc() {
 		log.Println(err)
 	}
 
-	_, _ = h.LogicGetFunc(req2, handMapGet)
+	_, _ = lgc.LogicGetFunc(req2, handMapGet)
 }
 
 // Output:
@@ -44,7 +44,7 @@ func ExamplePostFunc() {
 	}
 	nr := httptest.NewRecorder()
 
-	status, _ := h.LogicPostFunc(nr, req, handMapPost, handMapGet)
+	status, _ := lgc.LogicPostFunc(nr, req, handMapPost, handMapGet)
 
 	fmt.Println(status)
 

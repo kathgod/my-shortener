@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -8,19 +9,22 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/pprof"
+	"os"
+	"os/signal"
 	"reflect"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	_ "github.com/lib/pq"
 
 	MyHandler "urlshortener/internal/app"
+	MyStorage "urlshortener/internal/database"
+	MyLogic "urlshortener/internal/logic"
 )
 
 const (
-	srError     = "Server Error"
-	dbOpenError = "Open DataBase Error"
+	srError = "Server Error"
 )
 
 var (
@@ -48,30 +52,33 @@ func init() {
 }
 
 func main() {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
 	flag.Parse()
 
 	fmt.Printf("Build version: %s\n", buildVersion)
 	fmt.Printf("Build date: %s\n", buildDate)
 	fmt.Printf("Build commit: %s\n", buildCommit)
-	log.Println("Начало тестирования")
 
-	MyHandler.ResHandParam.PortNumber = MyHandler.HandParam("SERVER_ADDRESS", srvAddress)
-	MyHandler.ResHandParam.BaseURL = MyHandler.HandParam("BASE_URL", bsURL)
-	MyHandler.ResHandParam.FileStoragePath = MyHandler.HandParam("FILE_STORAGE_PATH", flStoragePth)
-	MyHandler.ResHandParam.DataBaseDSN = MyHandler.HandParam("DATABASE_DSN", datadbaseDsn)
+	MyLogic.ResHandParam.PortNumber = MyLogic.HandParam("SERVER_ADDRESS", srvAddress)
+	MyLogic.ResHandParam.BaseURL = MyLogic.HandParam("BASE_URL", bsURL)
+	MyLogic.ResHandParam.FileStoragePath = MyLogic.HandParam("FILE_STORAGE_PATH", flStoragePth)
+	MyLogic.ResHandParam.DataBaseDSN = MyLogic.HandParam("DATABASE_DSN", datadbaseDsn)
 
-	enableHTTPSBuff := MyHandler.HandParam("ENABLE_HTTPS", enableHTTPS)
-	var err error
-	MyHandler.ResHandParam.EnableHTTPS, err = strconv.ParseBool(enableHTTPSBuff)
+	enableHTTPSBuff := MyLogic.HandParam("ENABLE_HTTPS", enableHTTPS)
+
+	buff, err := strconv.ParseBool(enableHTTPSBuff)
+	MyLogic.ResHandParam.EnableHTTPS = buff
 	if err != nil {
-		MyHandler.ResHandParam.EnableHTTPS = false
+		MyLogic.ResHandParam.EnableHTTPS = false
 	}
 
-	config := MyHandler.HandParam("CONFIG", configFile)
+	config := MyLogic.HandParam("CONFIG", configFile)
 	if config != "" {
-		MyHandler.HandConfigParam(config)
+		MyLogic.HandConfigParam(config)
 	}
-	log.Println(MyHandler.ResHandParam)
+	log.Println(MyLogic.ResHandParam)
 
 	mapPost := make(map[string]string)
 	mapGet := make(map[string]string)
@@ -104,43 +111,40 @@ func main() {
 	rtr.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	rtr.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
-	if MyHandler.ResHandParam.DataBaseDSN != "" {
-		db, errDB := sql.Open("postgres", MyHandler.ResHandParam.DataBaseDSN)
-		defer func(db *sql.DB) {
-			err := db.Close()
-			if err != nil {
-				log.Println(err)
-			}
-		}(db)
-		if errDB != nil {
-			log.Println(dbOpenError)
-		}
+	if MyLogic.ResHandParam.DataBaseDSN != "" {
+		db := MyStorage.OpenDB(MyLogic.ResHandParam.DataBaseDSN)
 		resGP := MyHandler.GetFuncPing(db)
-		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, db, MyHandler.ResHandParam.DataBaseDSN)
+		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, db, MyLogic.ResHandParam.DataBaseDSN)
 
 		rtr.Get("/ping", resGP)
 		rtr.Delete("/api/user/urls", resDAUU)
 
-		MyHandler.ResCreateSQLTable = MyHandler.CreateSQLTable(db)
-		log.Println(reflect.TypeOf(MyHandler.ResCreateSQLTable))
+		MyLogic.ResCreateSQLTable = MyLogic.CreateSQLTable(db)
+		log.Println(reflect.TypeOf(MyLogic.ResCreateSQLTable))
 	} else {
 		var db *sql.DB
-		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, db, MyHandler.ResHandParam.DataBaseDSN)
+		resDAUU := MyHandler.DeleteFuncAPIUserURLs(mapPost, mapGet, db, MyLogic.ResHandParam.DataBaseDSN)
 		rtr.Delete("/api/user/urls", resDAUU)
 	}
 
-	if !MyHandler.ResHandParam.EnableHTTPS {
-		log.Println("1")
-		err := http.ListenAndServe(MyHandler.ResHandParam.PortNumber, rtr)
+	server := &http.Server{Addr: MyLogic.ResHandParam.PortNumber, Handler: rtr}
+	if !MyLogic.ResHandParam.EnableHTTPS {
+		err := server.ListenAndServe()
 		if err != nil {
 			log.Println(srError)
 		}
 	} else {
-		log.Println("2")
-		err := http.ListenAndServeTLS(MyHandler.ResHandParam.PortNumber, "../../internal/transport/server.cert", "../../internal/transport/server.key", rtr)
+		err := server.ListenAndServeTLS("../../internal/transport/server.cert", "../../internal/transport/server.key")
 		if err != nil {
 			log.Println(srError)
 		}
 	}
 
+	<-sigChan
+	log.Println("Received signal")
+	shutdownctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err = server.Shutdown(shutdownctx); err != nil {
+		log.Fatalf("Error shutdown server: %v", err)
+	}
 }
