@@ -110,6 +110,7 @@ func LogicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 	}
 	log.Println("cckValue in PostFunc:", cckValue)
 	resultPost, sqlError := ShortPostFunc(handMapPost, handMapGet, bp, cckValue)
+	log.Println(resultPost)
 	byteResultPost := []byte(resultPost)
 	if r.Header.Get("Content-Encoding ") == "gzip" {
 		byteResultPost, err = Compress([]byte(resultPost))

@@ -73,7 +73,6 @@ func main() {
 	if config != "" {
 		MyLogic.HandConfigParam(config)
 	}
-	log.Println(MyLogic.ResHandParam)
 
 	mapPost := make(map[string]string)
 	mapGet := make(map[string]string)
