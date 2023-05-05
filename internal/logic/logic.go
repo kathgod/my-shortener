@@ -94,12 +94,13 @@ func LogicGetFunc(r *http.Request, handMapGet map[string]string) (int, string) {
 
 // LogicPostFunc Функция логики хендлера PostFunc.
 func LogicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[string]string, handMapGet map[string]string) (int, []byte) {
-
+	log.Println("Point 1")
 	bp, err := Decompress(io.ReadAll(r.Body))
 	if err != nil {
 		log.Println(postBodyError)
 		return http.StatusBadRequest, nil
 	}
+	log.Println("Point 2")
 	cck, errCck := r.Cookie("userId")
 	cckValue := ""
 	if errCck != nil {
@@ -108,9 +109,9 @@ func LogicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 	} else {
 		cckValue = cck.Value
 	}
+	log.Println("Point 3")
 	log.Println("cckValue in PostFunc:", cckValue)
 	resultPost, sqlError := ShortPostFunc(handMapPost, handMapGet, bp, cckValue)
-	log.Println(resultPost)
 	byteResultPost := []byte(resultPost)
 	if r.Header.Get("Content-Encoding ") == "gzip" {
 		byteResultPost, err = Compress([]byte(resultPost))
@@ -119,6 +120,7 @@ func LogicPostFunc(w http.ResponseWriter, r *http.Request, handMapPost map[strin
 		}
 		w.Header().Set("Accept-Encoding", "gzip")
 	}
+	log.Println("Point 4")
 	if sqlError != 0 {
 		return http.StatusCreated, byteResultPost
 	} else {
