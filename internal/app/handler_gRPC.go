@@ -9,13 +9,18 @@ import (
 	lgc "urlshortener/internal/logic"
 )
 
+// HandlerMapGet Мапа для храненения длинных юрл.
 var HandlerMapGet map[string]string
+
+// HandlerMapPost Мапа для хранения коротких юрл.
 var HandlerMapPost map[string]string
 
+// UserServer структура для реализации RPC.
 type UserServer struct {
 	pb.UnimplementedMyServiceServer
 }
 
+// GetFuncRPC Хендлер для RPC аналогичен GetFunc для HTTP-сервера.
 func (s *UserServer) GetFuncRPC(ctx context.Context, req *pb.GetFuncRequest) (*pb.GetFuncResponse, error) {
 	request, _ := http.NewRequest("GET", req.Url.Url, nil)
 	resLF, out := lgc.LogicGetFunc(request, HandlerMapGet)
@@ -34,6 +39,7 @@ func (s *UserServer) GetFuncRPC(ctx context.Context, req *pb.GetFuncRequest) (*p
 	return response, nil
 }
 
+// PostFuncRPC Хендлер для RPC аналогичен PostFunc для HTTP-сервера.
 func (s *UserServer) PostFuncRPC(ctx context.Context, req *pb.PostFuncRequest) (*pb.PostFuncResponse, error) {
 	request, _ := http.NewRequest("POST", req.Addresss, strings.NewReader(req.Longurl.Url))
 	var wr http.ResponseWriter
@@ -56,6 +62,7 @@ func (s *UserServer) PostFuncRPC(ctx context.Context, req *pb.PostFuncRequest) (
 	return response, nil
 }
 
+// GetFuncPingRPC Хендлер для RPC аналогичен GetFuncPing для HTTP-сервера.
 func GetFuncPingRPC(ctx context.Context, req *pb.GetFuncPingRequest) (*pb.GetFuncPingResponse, error) {
 	resFL := lgc.LogicGetFuncPing(lgc.ResHandParam.DataBaseDSN)
 	response := &pb.GetFuncPingResponse{}
