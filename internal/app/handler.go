@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -16,10 +15,8 @@ const (
 func GetFunc(handMapGet map[string]string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resLF, out := lgc.LogicGetFunc(r, handMapGet)
-		fmt.Println(out)
 		switch {
 		case resLF == http.StatusTemporaryRedirect:
-			fmt.Println(out)
 			w.Header().Set("Location", out)
 			w.WriteHeader(http.StatusTemporaryRedirect)
 		case resLF == http.StatusGone:
@@ -139,6 +136,27 @@ func DeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]
 		switch {
 		case resFL == http.StatusAccepted:
 			w.WriteHeader(http.StatusAccepted)
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}
+}
+
+// GetFuncAPIInternalStats Хендлер для полчения всех колличества юзеров и сокращенных URL.
+func GetFuncAPIInternalStats(handMapPost map[string]string, ts string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		resFL, byteRes := lgc.LogicGetFuncAPIInternalStats(handMapPost, ts, w, r)
+		switch {
+		case resFL == http.StatusForbidden:
+			w.WriteHeader(http.StatusForbidden)
+		case resFL == http.StatusOK:
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write(byteRes)
+			if err != nil {
+				log.Println(writeerr)
+				log.Println(err)
+			}
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 		}
