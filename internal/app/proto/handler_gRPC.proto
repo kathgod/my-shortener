@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "urlshortener/internal/app/proto";
+
+message GetFuncRequest {
+    message Httprequrl {
+        string url = 1;
+    }
+    Httprequrl url = 1;
+}
+
+message GetFuncResponse {
+    int64 status = 1;
+
+    message Out {
+        string out = 1;
+    }
+    Out out = 2;
+}
+
+message PostFuncRequest {
+    string addresss = 1;
+
+    message Longurl {
+        string url = 1;
+    }
+    Longurl longurl = 2;
+}
+
+message PostFuncResponse {
+    int64 status = 1;
+
+    bytes out = 2;
+}
+
+
+message GetFuncPingRequest {
+    
+}
+
+message GetFuncPingResponse {
+    int64 status = 1;
+}
+
+service MyService {
+    rpc GetFuncRPC(GetFuncRequest) returns (GetFuncResponse);
+    rpc PostFuncRPC(PostFuncRequest) returns (PostFuncResponse);
+    rpc GetFuncPingRPC(GetFuncPingRequest) returns (GetFuncPingResponse);
+}
