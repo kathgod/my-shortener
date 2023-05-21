@@ -15,6 +15,7 @@ import (
 	"io"
 	"log"
 	mr "math/rand"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -298,6 +299,7 @@ type FlagParam struct {
 	FileStoragePath string `json:"file_storage_path"`
 	DataBaseDSN     string `json:"database_dsn,omitempty"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustedSubnet   string `json:"trusted_subnet,omitempty"`
 }
 
 // ResHandParam Структура для предобработки флагов и переменных.
@@ -320,6 +322,7 @@ func HandParam(name string, flg *string) string {
 		res = res + "/"
 	case "ENABLE_HTTPS":
 	case "CONFIG":
+	case "TRUSTED_SUBNET":
 	}
 	return res
 }
@@ -366,6 +369,12 @@ func HandConfigParam(res string) {
 	if !ResHandParam.EnableHTTPS {
 		if buff.EnableHTTPS {
 			ResHandParam.EnableHTTPS = buff.EnableHTTPS
+		}
+	}
+
+	if ResHandParam.TrustedSubnet == "" {
+		if buff.TrustedSubnet != "" {
+			ResHandParam.TrustedSubnet = buff.TrustedSubnet
 		}
 	}
 }
@@ -723,4 +732,46 @@ func LogicDeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[st
 	}
 	wg.Wait()
 	return http.StatusAccepted
+}
+
+// LogicGetFuncAPIInternalStats функция логики для GetFuncAPIInternalStats.
+func LogicGetFuncAPIInternalStats(handMapPost map[string]string, ts string, w http.ResponseWriter, r *http.Request) (int, []byte) {
+	var emptyByte []byte
+	if ts == "" {
+		return http.StatusForbidden, emptyByte
+	}
+	_, trustedIPNet, err := net.ParseCIDR(ts)
+	if err != nil {
+		log.Println(err)
+		return http.StatusInternalServerError, emptyByte
+	}
+
+	clientIP := r.Header.Get("X-Real-IP")
+	if clientIP == "" {
+		return http.StatusForbidden, emptyByte
+	}
+
+	clientIPAddr := net.ParseIP(clientIP)
+
+	if !trustedIPNet.Contains(clientIPAddr) {
+		return http.StatusForbidden, emptyByte
+	}
+
+	var JSStruct AllUsersAndURL
+	JSStruct.URLs = len(handMapPost)
+	JSStruct.Users = len(ResIDKey)
+
+	byteFotmatJSStruct, err := json.Marshal(JSStruct)
+	if err != nil {
+		log.Println(err)
+		return http.StatusInternalServerError, emptyByte
+	}
+
+	return http.StatusOK, byteFotmatJSStruct
+}
+
+// AllUsersAndURL Тип данных для JSon формата возврата хендлера GetFuncAPIInternalStats.
+type AllUsersAndURL struct {
+	URLs  int `json:"urls"`
+	Users int `json:"users"`
 }

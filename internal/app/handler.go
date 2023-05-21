@@ -144,3 +144,24 @@ func DeleteFuncAPIUserURLs(handMapPost map[string]string, handMapGet map[string]
 		}
 	}
 }
+
+// GetFuncAPIInternalStats Хендлер для полчения всех колличества юзеров и сокращенных URL.
+func GetFuncAPIInternalStats(handMapPost map[string]string, ts string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		resFL, byteRes := lgc.LogicGetFuncAPIInternalStats(handMapPost, ts, w, r)
+		switch {
+		case resFL == http.StatusForbidden:
+			w.WriteHeader(http.StatusForbidden)
+		case resFL == http.StatusOK:
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write(byteRes)
+			if err != nil {
+				log.Println(writeerr)
+				log.Println(err)
+			}
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}
+}

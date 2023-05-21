@@ -26,12 +26,13 @@ const (
 )
 
 var (
-	srvAddress   *string
-	bsURL        *string
-	flStoragePth *string
-	datadbaseDsn *string
-	enableHTTPS  *string
-	configFile   *string
+	srvAddress    *string
+	bsURL         *string
+	flStoragePth  *string
+	datadbaseDsn  *string
+	enableHTTPS   *string
+	configFile    *string
+	trustedSubnet *string
 )
 
 var (
@@ -47,6 +48,7 @@ func init() {
 	datadbaseDsn = flag.String("d", "", "copy in DATABASE_DSN param")
 	enableHTTPS = flag.String("s", "false", "copy in ENABLE_HTTPS param")
 	configFile = flag.String("c", "", "copy in CONFIG param")
+	trustedSubnet = flag.String("t", "", "copy in TRUSTED_SUBNET param")
 }
 
 func main() {
@@ -60,6 +62,7 @@ func main() {
 	MyLogic.ResHandParam.BaseURL = MyLogic.HandParam("BASE_URL", bsURL)
 	MyLogic.ResHandParam.FileStoragePath = MyLogic.HandParam("FILE_STORAGE_PATH", flStoragePth)
 	MyLogic.ResHandParam.DataBaseDSN = MyLogic.HandParam("DATABASE_DSN", datadbaseDsn)
+	MyLogic.ResHandParam.TrustedSubnet = MyLogic.HandParam("TRUSTED_SUBNET", trustedSubnet)
 
 	enableHTTPSBuff := MyLogic.HandParam("ENABLE_HTTPS", enableHTTPS)
 
@@ -82,6 +85,7 @@ func main() {
 	resPAS := MyHandler.PostFuncAPIShorten(mapPost, mapGet)
 	resGAUU := MyHandler.GetFuncAPIUserUrls(mapGet)
 	resPFASB := MyHandler.PostFuncAPIShortenBatch(mapPost, mapGet)
+	resGAIS := MyHandler.GetFuncAPIInternalStats(mapPost, MyLogic.ResHandParam.TrustedSubnet)
 
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -91,6 +95,7 @@ func main() {
 	rtr.Post("/api/shorten", resPAS)
 	rtr.Get("/api/user/urls", resGAUU)
 	rtr.Post("/api/shorten/batch", resPFASB)
+	rtr.Get("/api/internal/stats", resGAIS)
 
 	rtr.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
 	rtr.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
